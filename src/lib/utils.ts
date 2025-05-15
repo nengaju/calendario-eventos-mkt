@@ -1,56 +1,65 @@
 
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-import { AssigneeType, CompanyType } from "@/types"
- 
+import { clsx, type ClassValue } from "clsx";
+import { format, isToday } from "date-fns";
+import { twMerge } from "tailwind-merge";
+
+// Função utilitária para mesclar classes CSS
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-export function getAssigneeColor(assignee: AssigneeType) {
-  switch (assignee) {
-    case "MARIANO":
-      return "border-blue-200 bg-blue-50 text-blue-700"
-    case "RUBENS":
-      return "border-green-200 bg-green-50 text-green-700"
-    case "GIOVANNA":
-      return "border-purple-200 bg-purple-50 text-purple-700"
-    case "YAGO":
-      return "border-orange-200 bg-orange-50 text-orange-700"
-    case "JÚNIOR":
-      return "border-red-200 bg-red-50 text-red-700"
-    default:
-      return "border-gray-200 bg-gray-50 text-gray-700"
+// Função para formatar datas
+export function formatDate(date: Date): string {
+  return format(date, "dd/MM/yyyy");
+}
+
+// Função para formatar hora
+export function formatTime(date: Date): string {
+  return format(date, "HH:mm");
+}
+
+// Função para verificar se uma data é hoje
+export function checkIfToday(date: Date): boolean {
+  return isToday(date);
+}
+
+// Função para gerar um ID único
+export function generateId(): string {
+  return crypto.randomUUID();
+}
+
+// Função para formatar datas com base no contexto
+export function formatDateDisplay(date: Date): string {
+  if (isToday(date)) {
+    return `Hoje, ${format(date, "HH:mm")}`;
   }
+  return format(date, "dd/MM/yyyy HH:mm");
 }
 
-export function getCompanyColor(company: CompanyType) {
-  switch (company) {
-    case "YATTA":
-      return "#F0AD00" // Amarelo Trator
-    case "FORBEL":
-      return "#0040A8" // Azul Ford
-    default:
-      return "#6E6E6E" // Default gray
-  }
+// Função para truncar texto
+export function truncateText(text: string, maxLength: number = 50): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "...";
 }
 
-// Add the missing getEventColorClass function
-export function getEventColorClass(color: string | undefined) {
+// Função para obter classe de cor do evento
+export function getEventColorClass(color: string | undefined): string {
   switch (color) {
     case "blue":
-      return "bg-blue-500"
+      return "bg-blue-500";
     case "green":
-      return "bg-green-500"
+      return "bg-green-500";
     case "purple":
-      return "bg-purple-500"
+      return "bg-purple-500";
     case "red":
-      return "bg-red-500"
+      return "bg-red-500";
     case "orange":
-      return "bg-orange-500"
+      return "bg-orange-500";
     case "yellow":
-      return "bg-yellow-500"
+      return "bg-yellow-500";
+    case "teal":
+      return "bg-teal-500";
     default:
-      return "bg-gray-500"
+      return "bg-gray-500";
   }
 }

@@ -10,10 +10,11 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/admin/Dashboard";
 import UsersPage from "./pages/admin/UsersPage";
 import Settings from "./pages/admin/Settings";
-import AdminLayout from "./components/layouts/AdminLayout";
+import MainLayout from "./components/layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { EventProvider } from "./context/EventContext";
+import ThemeSettings from "./pages/admin/ThemeSettings";
 
 const queryClient = new QueryClient();
 
@@ -31,19 +32,20 @@ const App = () => (
               
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
-                {/* Admin Dashboard Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="settings" element={<Settings />} />
+                <Route element={<MainLayout />}>
+                  {/* Admin Dashboard Routes */}
+                  <Route path="/admin" element={<Dashboard />} />
+                  <Route path="/admin/settings" element={<Settings />} />
+                  <Route path="/admin/theme" element={<ThemeSettings />} />
                   
                   {/* Admin-only Routes */}
                   <Route element={<ProtectedRoute requireAdmin={true} />}>
-                    <Route path="users" element={<UsersPage />} />
+                    <Route path="/admin/users" element={<UsersPage />} />
                   </Route>
+                  
+                  {/* Calendar Routes */}
+                  <Route path="/" element={<Index />} />
                 </Route>
-                
-                {/* Calendar Routes */}
-                <Route path="/" element={<Index />} />
               </Route>
               
               {/* Redirect from unknown routes to 404 */}
