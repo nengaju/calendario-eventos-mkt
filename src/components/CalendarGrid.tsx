@@ -57,11 +57,18 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({ currentMonth, onDateClick, 
               ${!isSameMonth(day, monthStart) ? 'bg-gray-50 text-gray-400' : 'bg-white'} 
               hover:bg-gray-50 transition-colors cursor-pointer`}
             key={day.toString()}
-            onClick={() => onDateClick(cloneDay)}
+            onClick={(e) => {
+              // Only trigger dateClick if clicking directly on the cell, not on its children
+              if (e.currentTarget === e.target) {
+                onDateClick(cloneDay);
+              }
+            }}
             onDrop={(e) => {
               e.preventDefault();
               const eventId = e.dataTransfer.getData('event_id');
-              onDrop(cloneDay, eventId);
+              if (eventId) {
+                onDrop(cloneDay, eventId);
+              }
             }}
             onDragOver={(e) => e.preventDefault()}
           >

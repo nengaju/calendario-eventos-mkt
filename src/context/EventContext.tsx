@@ -1,8 +1,8 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { Event, Task } from '@/types';
+import { Event, Task, CompanyType } from '@/types';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 interface EventContextType {
   events: Event[];
@@ -38,7 +38,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setEvents(eventsWithDateObjects);
       } catch (error) {
         console.error('Error parsing events from localStorage:', error);
-        toast.error('Erro ao carregar eventos salvos');
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar eventos salvos",
+          variant: "destructive"
+        });
       }
     }
   }, []);
@@ -56,7 +60,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
     
     setEvents(prev => [...prev, newEvent]);
-    toast.success('Evento criado com sucesso');
+    toast({
+      title: "Sucesso",
+      description: "Evento criado com sucesso"
+    });
   };
 
   const updateEvent = (updatedEvent: Event) => {
@@ -65,12 +72,18 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         event.id === updatedEvent.id ? updatedEvent : event
       )
     );
-    toast.success('Evento atualizado com sucesso');
+    toast({
+      title: "Sucesso",
+      description: "Evento atualizado com sucesso"
+    });
   };
 
   const deleteEvent = (id: string) => {
     setEvents(prev => prev.filter(event => event.id !== id));
-    toast.success('Evento removido com sucesso');
+    toast({
+      title: "Sucesso",
+      description: "Evento removido com sucesso"
+    });
   };
 
   const getEventById = (id: string) => {
@@ -90,7 +103,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           : event
       )
     );
-    toast.success('Tarefa adicionada com sucesso');
+    toast({
+      title: "Sucesso",
+      description: "Tarefa adicionada com sucesso"
+    });
   };
 
   const updateTaskInEvent = (eventId: string, updatedTask: Task) => {
@@ -106,7 +122,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           : event
       )
     );
-    toast.success('Tarefa atualizada com sucesso');
+    toast({
+      title: "Sucesso", 
+      description: "Tarefa atualizada com sucesso"
+    });
   };
 
   const deleteTaskFromEvent = (eventId: string, taskId: string) => {
@@ -117,7 +136,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           : event
       )
     );
-    toast.success('Tarefa removida com sucesso');
+    toast({
+      title: "Sucesso",
+      description: "Tarefa removida com sucesso"
+    });
   };
 
   const moveEventToDate = (eventId: string, newDate: Date) => {
@@ -128,7 +150,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           : event
       )
     );
-    toast.success(`Evento movido para ${format(newDate, 'dd/MM/yyyy')}`);
+    toast({
+      title: "Evento movido",
+      description: `Evento movido para ${format(newDate, 'dd/MM/yyyy')}`
+    });
   };
 
   const toggleTaskCompletion = (eventId: string, taskId: string) => {

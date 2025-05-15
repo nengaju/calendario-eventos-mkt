@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Event } from '@/types';
-import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { getEventColorClass } from '@/lib/utils';
 import EventDetailDialog from './EventDetailDialog';
@@ -18,24 +17,34 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('event_id', event.id);
+    e.stopPropagation(); // Prevent event bubbling
+  };
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    setShowDetail(true);
   };
   
   return (
     <>
       <div
         className={`${getEventColorClass(event.color)} p-2 rounded-md text-white cursor-pointer shadow-sm animate-fade-in`}
-        onClick={() => setShowDetail(true)}
+        onClick={handleClick}
         draggable
         onDragStart={handleDragStart}
       >
         <div className="text-sm font-semibold truncate">{event.title}</div>
-        {totalTasks > 0 && (
-          <div className="text-xs mt-1 flex items-center justify-between">
+        <div className="flex justify-between items-center mt-1">
+          {event.company && (
+            <span className="text-xs opacity-80">{event.company}</span>
+          )}
+          
+          {totalTasks > 0 && (
             <Badge variant="outline" className="text-white border-white/30 hover:bg-white/10">
               {completedTasks}/{totalTasks}
             </Badge>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       
       {showDetail && (

@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useEvents } from '@/context/EventContext';
-import { Event } from '@/types';
+import { Event, CompanyType } from '@/types';
 import {
   Select,
   SelectContent,
@@ -41,6 +41,17 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [title, setTitle] = useState(event?.title || '');
   const [date, setDate] = useState<Date>(event?.date || selectedDate);
   const [description, setDescription] = useState(event?.description || '');
+  const [company, setCompany] = useState<CompanyType | undefined>(event?.company);
+  
+  // Set color based on company
+  useEffect(() => {
+    if (company === 'YATTA') {
+      setColor('yellow');
+    } else if (company === 'FORBEL') {
+      setColor('blue');
+    }
+  }, [company]);
+  
   const [color, setColor] = useState(event?.color || 'blue');
   
   const colors = [
@@ -51,6 +62,11 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     { name: 'Laranja', value: 'orange' },
     { name: 'Amarelo', value: 'yellow' },
     { name: 'Turquesa', value: 'teal' },
+  ];
+
+  const companies: { name: string; value: CompanyType }[] = [
+    { name: 'YATTA', value: 'YATTA' },
+    { name: 'FORBEL', value: 'FORBEL' },
   ];
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,7 +80,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         title,
         date,
         description,
-        color
+        color,
+        company
       });
     } else {
       addEvent({
@@ -72,7 +89,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         date,
         description,
         tasks: [],
-        color
+        color,
+        company
       });
     }
     
@@ -84,6 +102,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Evento' : 'Novo Evento'}</DialogTitle>
+          <DialogDescription>
+            Preencha os detalhes do evento abaixo.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -124,19 +145,22 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </PopoverContent>
             </Popover>
           </div>
-          
+
           <div className="space-y-2">
-            <Label htmlFor="color">Cor</Label>
-            <Select value={color} onValueChange={setColor}>
+            <Label htmlFor="company">Empresa</Label>
+            <Select 
+              value={company} 
+              onValueChange={(value) => setCompany(value as CompanyType)}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione uma cor" />
+                <SelectValue placeholder="Selecione uma empresa" />
               </SelectTrigger>
               <SelectContent>
-                {colors.map((color) => (
-                  <SelectItem key={color.value} value={color.value}>
+                {companies.map((company) => (
+                  <SelectItem key={company.value} value={company.value}>
                     <div className="flex items-center">
-                      <div className={`w-4 h-4 rounded-full bg-kanban-${color.value} mr-2`}></div>
-                      {color.name}
+                      <div className={`w-4 h-4 rounded-full bg-kanban-${company.value === 'YATTA' ? 'yellow' : 'blue'} mr-2`}></div>
+                      {company.name}
                     </div>
                   </SelectItem>
                 ))}

@@ -44,6 +44,11 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
   if (!event) {
     return null;
   }
+
+  const handleDialogClick = (e: React.MouseEvent) => {
+    // Prevent event bubbling to parent elements
+    e.stopPropagation();
+  };
   
   const handleDelete = () => {
     deleteEvent(eventId);
@@ -56,11 +61,13 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
   const progress = event.tasks.length > 0 
     ? Math.round((completedTasks.length / event.tasks.length) * 100) 
     : 0;
+
+  const companyLabel = event.company ? `Empresa: ${event.company}` : null;
   
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-auto">
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-auto" onClick={handleDialogClick}>
           <DialogHeader>
             <div className="flex justify-between items-start">
               <div>
@@ -69,6 +76,11 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
                   <CalendarIcon className="h-4 w-4 mr-1" />
                   {format(new Date(event.date), 'PPP', { locale: ptBR })}
                 </DialogDescription>
+                {companyLabel && (
+                  <div className="mt-1 text-sm text-gray-500">
+                    {companyLabel}
+                  </div>
+                )}
               </div>
               
               <div className="flex gap-2">
