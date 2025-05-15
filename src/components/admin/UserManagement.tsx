@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useUsers } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -211,7 +210,7 @@ const UserManagement: React.FC = () => {
                 )}
               </TableCell>
               <TableCell>
-                <Badge variant={user.isActive ? 'success' : 'destructive'}>
+                <Badge variant={user.isActive ? 'secondary' : 'destructive'}>
                   {user.isActive ? 'Ativo' : 'Inativo'}
                 </Badge>
               </TableCell>
