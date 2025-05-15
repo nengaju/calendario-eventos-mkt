@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from '@/context/AuthContext';
 
 interface TaskListProps {
   tasks: Task[];
@@ -28,8 +29,11 @@ const TaskList: React.FC<TaskListProps> = ({
   onDeleteTask,
   onAddTask 
 }) => {
+  const { user, isAdmin } = useAuth();
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskAssignee, setNewTaskAssignee] = useState<AssigneeType | undefined>(undefined);
+  const [newTaskAssignee, setNewTaskAssignee] = useState<AssigneeType | undefined>(
+    isAdmin ? undefined : user?.assignee
+  );
   
   const assignees: AssigneeType[] = ["MARIANO", "RUBENS", "GIOVANNA", "YAGO", "JÚNIOR"];
   
@@ -41,7 +45,7 @@ const TaskList: React.FC<TaskListProps> = ({
         assignee: newTaskAssignee
       });
       setNewTaskTitle('');
-      setNewTaskAssignee(undefined);
+      setNewTaskAssignee(isAdmin ? undefined : user?.assignee);
     }
   };
   
@@ -50,6 +54,11 @@ const TaskList: React.FC<TaskListProps> = ({
       handleAddTask();
     }
   };
+  
+  // Filter tasks based on user role
+  const filteredTasks = isAdmin 
+    ? tasks 
+    : tasks.filter(task => !task.assignee || task.assignee === user?.assignee);
   
   return (
     <div className="space-y-4">
@@ -64,19 +73,22 @@ const TaskList: React.FC<TaskListProps> = ({
             className="flex-1"
           />
           
-          <Select
-            value={newTaskAssignee}
-            onValueChange={(value) => setNewTaskAssignee(value as AssigneeType)}
-          >
-            <SelectTrigger className="w-full sm:w-52">
-              <SelectValue placeholder="Designar responsável" />
-            </SelectTrigger>
-            <SelectContent>
-              {assignees.map((name) => (
-                <SelectItem key={name} value={name}>{name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isAdmin && (
+            <Select
+              value={newTaskAssignee}
+              onValueChange={(value) => setNewTaskAssignee(value as AssigneeType)}
+            >
+              <SelectTrigger className="w-full sm:w-52">
+                <SelectValue placeholder="Designar responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {assignees.map((name) => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           
           <Button type="button" onClick={handleAddTask} disabled={!newTaskTitle.trim()}>
             <Plus className="h-4 w-4 mr-1" /> Adicionar
@@ -84,11 +96,11 @@ const TaskList: React.FC<TaskListProps> = ({
         </div>
       </div>
       
-      <div className="font-medium text-base">Tarefas ({tasks.length})</div>
+      <div className="font-medium text-base">Tarefas ({filteredTasks.length})</div>
       
-      {tasks.length > 0 ? (
+      {filteredTasks.length > 0 ? (
         <div className="space-y-2">
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <TaskItem
               key={task.id}
               task={task}
@@ -100,7 +112,9 @@ const TaskList: React.FC<TaskListProps> = ({
         </div>
       ) : (
         <div className="text-center text-gray-500 py-4">
-          Nenhuma tarefa adicionada ainda
+          {isAdmin 
+            ? "Nenhuma tarefa adicionada ainda" 
+            : "Nenhuma tarefa atribuída a você ainda"}
         </div>
       )}
     </div>

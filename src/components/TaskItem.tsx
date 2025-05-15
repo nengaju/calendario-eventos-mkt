@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
 import { getAssigneeColor } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 interface TaskItemProps {
   task: Task;
@@ -28,11 +29,15 @@ const TaskItem: React.FC<TaskItemProps> = ({
   onUpdateTask,
   onDeleteTask 
 }) => {
+  const { user, isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editAssignee, setEditAssignee] = useState<AssigneeType | undefined>(task.assignee);
   
   const assignees: AssigneeType[] = ["MARIANO", "RUBENS", "GIOVANNA", "YAGO", "JÚNIOR"];
+  
+  // Check if the current user has permission to interact with this task
+  const canInteract = isAdmin || user?.assignee === task.assignee;
   
   const handleSaveEdit = () => {
     if (editTitle.trim()) {
@@ -62,20 +67,22 @@ const TaskItem: React.FC<TaskItemProps> = ({
           autoFocus
         />
         
-        <Select
-          value={editAssignee}
-          onValueChange={(value) => setEditAssignee(value as AssigneeType)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Designar responsável" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">Sem responsável</SelectItem>
-            {assignees.map((name) => (
-              <SelectItem key={name} value={name}>{name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {isAdmin && (
+          <Select
+            value={editAssignee}
+            onValueChange={(value) => setEditAssignee(value as AssigneeType)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Designar responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem responsável</SelectItem>
+              {assignees.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         
         <div className="flex justify-end gap-2 mt-2">
           <Button size="sm" variant="outline" onClick={handleCancelEdit}>
@@ -94,8 +101,9 @@ const TaskItem: React.FC<TaskItemProps> = ({
       <div className="flex items-center gap-3">
         <Checkbox 
           checked={task.completed} 
-          onCheckedChange={() => onToggleComplete(task.id)}
-          className={task.completed ? 'opacity-75' : ''}
+          onCheckedChange={() => canInteract && onToggleComplete(task.id)}
+          className={`${task.completed ? 'opacity-75' : ''} ${!canInteract ? 'cursor-not-allowed opacity-50' : ''}`}
+          disabled={!canInteract}
         />
         
         <span className={`${task.completed ? 'line-through text-gray-500' : ''}`}>
@@ -111,13 +119,17 @@ const TaskItem: React.FC<TaskItemProps> = ({
           </Badge>
         )}
         
-        <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
-          <Pencil className="h-4 w-4" />
-        </Button>
-        
-        <Button variant="ghost" size="icon" onClick={() => onDeleteTask(task.id)}>
-          <Trash className="h-4 w-4" />
-        </Button>
+        {canInteract && (
+          <>
+            <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            
+            <Button variant="ghost" size="icon" onClick={() => onDeleteTask(task.id)}>
+              <Trash className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

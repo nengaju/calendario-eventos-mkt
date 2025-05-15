@@ -114,12 +114,12 @@ const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 >(({ className, children, ...props }, ref) => {
-  // Ensure value prop is never empty string
+  // Validate that value is not an empty string for SelectItem
   if (props.value === '') {
     console.error('SelectItem must have a non-empty value prop');
     return null;
   }
-  
+
   return (
     <SelectPrimitive.Item
       ref={ref}

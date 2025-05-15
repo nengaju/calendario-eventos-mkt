@@ -1,0 +1,345 @@
+
+import React, { useState } from 'react';
+import { useUsers } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { 
+  Table, TableBody, TableCaption, TableCell, 
+  TableHead, TableHeader, TableRow 
+} from '@/components/ui/table';
+import { 
+  Dialog, DialogContent, DialogDescription, 
+  DialogFooter, DialogHeader, DialogTitle, DialogTrigger 
+} from '@/components/ui/dialog';
+import { 
+  Select, SelectContent, SelectItem, 
+  SelectTrigger, SelectValue 
+} from '@/components/ui/select';
+import { 
+  User, Edit, Trash, UserPlus, Shield, ShieldOff, 
+  UserCheck, UserX 
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { AssigneeType } from '@/types';
+
+const UserManagement: React.FC = () => {
+  const { 
+    users, 
+    addUser, 
+    updateUser, 
+    deleteUser, 
+    setUserRole, 
+    setUserAssignee, 
+    toggleUserActive 
+  } = useUsers();
+
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
+  const [newAssignee, setNewAssignee] = useState<AssigneeType | undefined>(undefined);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editUsername, setEditUsername] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editRole, setEditRole] = useState<'admin' | 'user'>('user');
+  const [editAssignee, setEditAssignee] = useState<AssigneeType | undefined>(undefined);
+  const [editActive, setEditActive] = useState(true);
+
+  const handleAddUser = () => {
+    if (newUsername && newPassword) {
+      addUser({
+        username: newUsername,
+        password: newPassword,
+        role: newRole,
+        assignee: newAssignee,
+        isActive: true
+      });
+      
+      // Reset form
+      setNewUsername('');
+      setNewPassword('');
+      setNewRole('user');
+      setNewAssignee(undefined);
+      setIsAddDialogOpen(false);
+    }
+  };
+
+  const openEditDialog = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      setEditingUser(userId);
+      setEditUsername(user.username);
+      setEditPassword(''); // Don't show the current password for security
+      setEditRole(user.role);
+      setEditAssignee(user.assignee);
+      setEditActive(user.isActive);
+      setIsEditDialogOpen(true);
+    }
+  };
+
+  const handleUpdateUser = () => {
+    if (!editingUser) return;
+    
+    const user = users.find(u => u.id === editingUser);
+    if (!user) return;
+    
+    updateUser({
+      ...user,
+      username: editUsername,
+      password: editPassword || user.password, // Keep existing password if no new one is provided
+      role: editRole,
+      assignee: editAssignee,
+      isActive: editActive
+    });
+    
+    setIsEditDialogOpen(false);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
+      deleteUser(userId);
+    }
+  };
+
+  const assignees: AssigneeType[] = ["MARIANO", "RUBENS", "GIOVANNA", "YAGO", "JÚNIOR"];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold">Gerenciamento de Usuários</h2>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <UserPlus className="h-4 w-4 mr-2" /> Adicionar Usuário
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adicionar Novo Usuário</DialogTitle>
+              <DialogDescription>
+                Preencha os campos abaixo para criar um novo usuário.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="username">Nome de Usuário</Label>
+                <Input
+                  id="username"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  placeholder="Digite o nome de usuário"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Digite a senha"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="role">Função</Label>
+                <Select value={newRole} onValueChange={(value) => setNewRole(value as 'admin' | 'user')}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a função" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="user">Usuário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="assignee">Responsável</Label>
+                <Select 
+                  value={newAssignee} 
+                  onValueChange={(value) => setNewAssignee(value as AssigneeType || undefined)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {assignees.map((name) => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleAddUser} disabled={!newUsername || !newPassword}>Adicionar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Table>
+        <TableCaption>Lista de usuários do sistema</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Usuário</TableHead>
+            <TableHead>Função</TableHead>
+            <TableHead>Responsável</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell className="font-medium">{user.username}</TableCell>
+              <TableCell>
+                <Badge variant={user.role === 'admin' ? 'default' : 'outline'}>
+                  {user.role === 'admin' ? 'Administrador' : 'Usuário'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                {user.assignee ? (
+                  <Badge variant="outline" className="bg-gray-100">
+                    {user.assignee}
+                  </Badge>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <Badge variant={user.isActive ? 'success' : 'destructive'}>
+                  {user.isActive ? 'Ativo' : 'Inativo'}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => openEditDialog(user.id)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => toggleUserActive(user.id)}
+                  >
+                    {user.isActive ? (
+                      <UserX className="h-4 w-4" />
+                    ) : (
+                      <UserCheck className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => setUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                  >
+                    {user.role === 'admin' ? (
+                      <ShieldOff className="h-4 w-4" />
+                    ) : (
+                      <Shield className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    size="icon" 
+                    onClick={() => handleDeleteUser(user.id)}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do usuário.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-username">Nome de Usuário</Label>
+              <Input
+                id="edit-username"
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value)}
+                placeholder="Digite o nome de usuário"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-password">
+                Senha <span className="text-gray-500 text-xs">(deixe em branco para manter a atual)</span>
+              </Label>
+              <Input
+                id="edit-password"
+                type="password"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Digite a nova senha"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-role">Função</Label>
+              <Select value={editRole} onValueChange={(value) => setEditRole(value as 'admin' | 'user')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a função" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="user">Usuário</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-assignee">Responsável</Label>
+              <Select 
+                value={editAssignee} 
+                onValueChange={(value) => setEditAssignee(value === "none" ? undefined : value as AssigneeType)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {assignees.map((name) => (
+                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="edit-active">Status ativo</Label>
+              <Switch 
+                id="edit-active" 
+                checked={editActive} 
+                onCheckedChange={setEditActive} 
+              />
+              <span className="text-sm text-gray-500 ml-2">
+                {editActive ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleUpdateUser} disabled={!editUsername}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default UserManagement;
