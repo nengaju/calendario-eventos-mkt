@@ -42,16 +42,14 @@ type Action =
       toastId?: ToastT["id"];
     };
 
-type ToastT = {
+interface ToastT {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
   variant?: "default" | "destructive";
-} & Pick<
-  ToastProps,
-  "variant" | "onOpenChange" | "status" | "icon" | "closeButton"
->;
+  onOpenChange?: (open: boolean) => void;
+}
 
 type State = {
   toasts: ToastT[];
@@ -116,7 +114,6 @@ export const reducer = (state: State, action: Action): State => {
                     toastId: t.id,
                   });
                 },
-                open: false,
               }
             : t
         ),
@@ -148,9 +145,15 @@ function dispatch(action: Action) {
   });
 }
 
-type Toast = Omit<ToastT, "id">;
+// Type for public facing toast function arguments
+export type Toast = {
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: ToastActionElement;
+  variant?: "default" | "destructive";
+};
 
-function toast({ ...props }: Toast) {
+function toast(props: Toast) {
   const id = genId();
 
   const update = (props: ToastT) =>
@@ -169,7 +172,6 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
-      open: true,
       onOpenChange: (open) => {
         if (!open) {
           dismiss();
