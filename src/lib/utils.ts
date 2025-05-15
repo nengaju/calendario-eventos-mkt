@@ -46,20 +46,38 @@ export function truncateText(text: string, maxLength: number = 50): string {
 export function getEventColorClass(color: string | undefined): string {
   switch (color) {
     case "blue":
-      return "bg-blue-500";
+      return "bg-kanban-blue";
     case "green":
-      return "bg-green-500";
+      return "bg-kanban-green";
     case "purple":
-      return "bg-purple-500";
+      return "bg-kanban-purple";
     case "red":
-      return "bg-red-500";
+      return "bg-kanban-red";
     case "orange":
-      return "bg-orange-500";
+      return "bg-kanban-orange";
     case "yellow":
-      return "bg-yellow-500";
+      return "bg-kanban-yellow";
     case "teal":
-      return "bg-teal-500";
+      return "bg-kanban-teal";
     default:
       return "bg-gray-500";
+  }
+}
+
+// Função para obter classe de cor do responsável
+export function getAssigneeColor(assignee: string): string {
+  switch (assignee) {
+    case "MARIANO":
+      return "border-blue-500 text-blue-500";
+    case "RUBENS":
+      return "border-green-500 text-green-500";
+    case "GIOVANNA":
+      return "border-purple-500 text-purple-500";
+    case "YAGO":
+      return "border-orange-500 text-orange-500";
+    case "JÚNIOR":
+      return "border-red-500 text-red-500";
+    default:
+      return "border-gray-500 text-gray-500";
   }
 }

@@ -98,25 +98,25 @@
 /* Classes para as cores do Kanban */
 @layer utilities {
   .bg-kanban-blue {
-    @apply bg-kanban-blue;
+    background-color: theme('colors.kanban.blue');
   }
   .bg-kanban-green {
-    @apply bg-kanban-green;
+    background-color: theme('colors.kanban.green');
   }
   .bg-kanban-red {
-    @apply bg-kanban-red;
+    background-color: theme('colors.kanban.red');
   }
   .bg-kanban-purple {
-    @apply bg-kanban-purple;
+    background-color: theme('colors.kanban.purple');
   }
   .bg-kanban-orange {
-    @apply bg-kanban-orange;
+    background-color: theme('colors.kanban.orange');
   }
   .bg-kanban-yellow {
-    @apply bg-kanban-yellow;
+    background-color: theme('colors.kanban.yellow');
   }
   .bg-kanban-teal {
-    @apply bg-kanban-teal;
+    background-color: theme('colors.kanban.teal');
   }
 }
 
