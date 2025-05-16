@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, Pencil, Trash } from 'lucide-react';
+import { CalendarIcon, Pencil, Trash, Download, BarChart2, Filter } from 'lucide-react';
 import { useEvents } from '@/context/EventContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TaskList from './TaskList';
@@ -19,6 +19,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import EventFormDialog from './EventFormDialog';
+import { useAuth } from '@/context/AuthContext';
+import { generatePdf } from '@/lib/pdf-generator';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetDescription, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger,
+  SheetClose
+} from "@/components/ui/sheet";
+import EventAnalytics from './EventAnalytics';
 
 interface EventDetailDialogProps {
   isOpen: boolean;
@@ -36,8 +48,11 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
     toggleTaskCompletion 
   } = useEvents();
   
+  const { isAdmin, isEditor } = useAuth();
+  
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   
   const event = getEventById(eventId);
   
@@ -50,10 +65,12 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
     e.stopPropagation();
   };
   
-  const handleDelete = () => {
-    deleteEvent(eventId);
-    setShowDeleteConfirm(false);
-    onClose();
+  const handleDelete = async () => {
+    const success = await deleteEvent(eventId);
+    if (success) {
+      setShowDeleteConfirm(false);
+      onClose();
+    }
   };
   
   const completedTasks = event.tasks.filter(task => task.completed);
@@ -63,6 +80,10 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
     : 0;
 
   const companyLabel = event.company ? `Empresa: ${event.company}` : null;
+  
+  const handleExportPdf = () => {
+    generatePdf(event);
+  };
   
   return (
     <>
@@ -84,12 +105,39 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
               </div>
               
               <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => setShowEditForm(true)}>
-                  <Pencil className="h-4 w-4" />
+                {(isAdmin || isEditor) && (
+                  <>
+                    <Button variant="outline" size="icon" onClick={() => setShowEditForm(true)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => setShowDeleteConfirm(true)}>
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                
+                <Button variant="outline" size="icon" onClick={handleExportPdf}>
+                  <Download className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" onClick={() => setShowDeleteConfirm(true)}>
-                  <Trash className="h-4 w-4" />
-                </Button>
+                
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <BarChart2 className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-full sm:w-[600px] max-w-full">
+                    <SheetHeader>
+                      <SheetTitle>Análise do Evento</SheetTitle>
+                      <SheetDescription>
+                        Estatísticas e gráficos para {event.title}
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-8">
+                      <EventAnalytics event={event} />
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </div>
             </div>
           </DialogHeader>
@@ -135,6 +183,7 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
                 onUpdateTask={(task) => updateTaskInEvent(event.id, task)}
                 onDeleteTask={(taskId) => deleteTaskFromEvent(event.id, taskId)}
                 onAddTask={(task) => addTaskToEvent(event.id, task)}
+                eventId={event.id}
               />
             </TabsContent>
             
@@ -145,6 +194,7 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
                 onUpdateTask={(task) => updateTaskInEvent(event.id, task)}
                 onDeleteTask={(taskId) => deleteTaskFromEvent(event.id, taskId)}
                 onAddTask={(task) => addTaskToEvent(event.id, task)}
+                eventId={event.id}
               />
             </TabsContent>
             
@@ -155,6 +205,7 @@ const EventDetailDialog: React.FC<EventDetailDialogProps> = ({ isOpen, onClose, 
                 onUpdateTask={(task) => updateTaskInEvent(event.id, task)}
                 onDeleteTask={(taskId) => deleteTaskFromEvent(event.id, taskId)}
                 onAddTask={(task) => addTaskToEvent(event.id, task)}
+                eventId={event.id}
               />
             </TabsContent>
           </Tabs>

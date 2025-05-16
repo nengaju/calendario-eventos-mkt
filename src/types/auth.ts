@@ -1,14 +1,13 @@
 
-import { AssigneeType } from "./index";
+import { AssigneeType, UserRole } from "./index";
 
-export type UserRole = "admin" | "user";
+export type UserRole = "admin" | "editor" | "viewer";
 
 export interface User {
   id: string;
   username: string;
   password: string; // This would be hashed in a real application
   role: UserRole;
-  assignee?: AssigneeType;
   isActive: boolean;
 }
 
@@ -23,4 +22,7 @@ export interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isEditor: boolean;
+  isViewer: boolean;
+  profile: any | null;
 }

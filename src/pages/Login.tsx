@@ -6,7 +6,7 @@ import { Navigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const { isAuthenticated } = useAuth();
-  const [siteName, setSiteName] = useState('Calendário de Eventos Kanban');
+  const [siteName, setSiteName] = useState('CALENDÁRIO DE EVENTOS - MKT');
   
   // Buscar o nome do site das configurações ao carregar o componente
   useEffect(() => {

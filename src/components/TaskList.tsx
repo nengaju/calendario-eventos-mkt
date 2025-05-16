@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Task, AssigneeType } from '@/types';
+import React, { useState, useEffect } from 'react';
+import { Task } from '@/types';
 import TaskItem from './TaskItem';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from '@/context/AuthContext';
+import { Checkbox } from '@/components/ui/checkbox';
+import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
 
 interface TaskListProps {
   tasks: Task[];
@@ -20,6 +23,7 @@ interface TaskListProps {
   onUpdateTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
   onAddTask: (task: Omit<Task, "id">) => void;
+  eventId?: string;
 }
 
 const TaskList: React.FC<TaskListProps> = ({ 
@@ -27,25 +31,44 @@ const TaskList: React.FC<TaskListProps> = ({
   onToggleComplete, 
   onUpdateTask, 
   onDeleteTask,
-  onAddTask 
+  onAddTask,
+  eventId
 }) => {
-  const { user, isAdmin } = useAuth();
+  const { user, profile, isAdmin, isEditor } = useAuth();
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskAssignee, setNewTaskAssignee] = useState<AssigneeType | undefined>(
-    isAdmin ? undefined : user?.assignee
-  );
+  const [newTaskAssignees, setNewTaskAssignees] = useState<string[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<{id: string, username: string}[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<{[key: string]: boolean}>({});
   
-  const assignees: AssigneeType[] = ["MARIANO", "RUBENS", "GIOVANNA", "YAGO", "JÚNIOR"];
+  // Fetch available users
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .order('username');
+          
+        if (error) throw error;
+        setAvailableUsers(data || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
   
   const handleAddTask = () => {
     if (newTaskTitle.trim()) {
       onAddTask({
         title: newTaskTitle.trim(),
         completed: false,
-        assignee: newTaskAssignee
+        assignees: Object.keys(selectedUsers).filter(id => selectedUsers[id])
       });
       setNewTaskTitle('');
-      setNewTaskAssignee(isAdmin ? undefined : user?.assignee);
+      setNewTaskAssignees([]);
+      setSelectedUsers({});
     }
   };
   
@@ -55,46 +78,70 @@ const TaskList: React.FC<TaskListProps> = ({
     }
   };
   
+  const handleUserToggle = (userId: string) => {
+    setSelectedUsers(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+  };
+  
   // Filter tasks based on user role
-  const filteredTasks = isAdmin 
-    ? tasks 
-    : tasks.filter(task => !task.assignee || task.assignee === user?.assignee);
+  const filteredTasks = tasks.filter(task => {
+    // Admins see all tasks
+    if (isAdmin) return true;
+    
+    // If the task has assignees, check if current user is assigned
+    if (task.assignees && task.assignees.length > 0) {
+      return task.assignees.some(assignee => assignee === user?.id);
+    }
+    
+    // If no assignees, show task to everyone (assuming public task)
+    return true;
+  });
   
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <div className="font-medium text-base">Adicionar nova tarefa</div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Input 
-            placeholder="Título da tarefa"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            onKeyDown={handleKeyPress}
-            className="flex-1"
-          />
+      {(isAdmin || isEditor) && (
+        <div className="space-y-2">
+          <div className="font-medium text-base">Adicionar nova tarefa</div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input 
+              placeholder="Título da tarefa"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="flex-1"
+            />
+            
+            <Button type="button" onClick={handleAddTask} disabled={!newTaskTitle.trim()}>
+              <Plus className="h-4 w-4 mr-1" /> Adicionar
+            </Button>
+          </div>
           
-          {isAdmin && (
-            <Select
-              value={newTaskAssignee}
-              onValueChange={(value) => setNewTaskAssignee(value as AssigneeType)}
-            >
-              <SelectTrigger className="w-full sm:w-52">
-                <SelectValue placeholder="Designar responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {assignees.map((name) => (
-                  <SelectItem key={name} value={name}>{name}</SelectItem>
+          {newTaskTitle.trim() && isAdmin && (
+            <div className="border p-2 rounded-md mt-2">
+              <div className="font-medium text-sm mb-2">Designar responsáveis:</div>
+              <div className="max-h-32 overflow-y-auto">
+                {availableUsers.map(user => (
+                  <div key={user.id} className="flex items-center space-x-2 mb-1">
+                    <Checkbox 
+                      id={`user-${user.id}`}
+                      checked={!!selectedUsers[user.id]} 
+                      onCheckedChange={() => handleUserToggle(user.id)}
+                    />
+                    <label 
+                      htmlFor={`user-${user.id}`}
+                      className="text-sm cursor-pointer"
+                    >
+                      {user.username}
+                    </label>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            </div>
           )}
-          
-          <Button type="button" onClick={handleAddTask} disabled={!newTaskTitle.trim()}>
-            <Plus className="h-4 w-4 mr-1" /> Adicionar
-          </Button>
         </div>
-      </div>
+      )}
       
       <div className="font-medium text-base">Tarefas ({filteredTasks.length})</div>
       
@@ -107,14 +154,13 @@ const TaskList: React.FC<TaskListProps> = ({
               onToggleComplete={onToggleComplete}
               onUpdateTask={onUpdateTask}
               onDeleteTask={onDeleteTask}
+              eventId={eventId}
             />
           ))}
         </div>
       ) : (
         <div className="text-center text-gray-500 py-4">
-          {isAdmin 
-            ? "Nenhuma tarefa adicionada ainda" 
-            : "Nenhuma tarefa atribuída a você ainda"}
+          Nenhuma tarefa adicionada ainda
         </div>
       )}
     </div>

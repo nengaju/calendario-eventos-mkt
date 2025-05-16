@@ -4,15 +4,25 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameMonth, 
 import { ptBR } from 'date-fns/locale';
 import { useEvents } from '@/context/EventContext';
 import EventCard from './EventCard';
+import { Event } from '@/types';
 
 interface CalendarGridProps {
   currentMonth: Date;
   onDateClick: (day: Date) => void;
   onDrop: (date: Date, eventId: string) => void;
+  filteredEvents?: Event[];
 }
 
-const CalendarGrid: React.FC<CalendarGridProps> = ({ currentMonth, onDateClick, onDrop }) => {
+const CalendarGrid: React.FC<CalendarGridProps> = ({ 
+  currentMonth, 
+  onDateClick, 
+  onDrop,
+  filteredEvents 
+}) => {
   const { events } = useEvents();
+  
+  // Use filtered events if provided, otherwise use all events
+  const displayEvents = filteredEvents || events;
   
   const renderDays = () => {
     const dateFormat = 'EEEEEE';
@@ -47,7 +57,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({ currentMonth, onDateClick, 
         const formattedDate = format(cloneDay, 'd');
         
         // Find events for this date
-        const dayEvents = events.filter(event => 
+        const dayEvents = displayEvents.filter(event => 
           isSameDay(new Date(event.date), cloneDay)
         );
         
