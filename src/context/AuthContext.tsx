@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { User, LoginCredentials, AuthContextType, UserRole } from '@/types/auth';
+import { User, LoginCredentials, AuthContextType } from '@/types/auth';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types';
@@ -25,8 +25,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null);
         if (session?.user) {
+          setUser(session.user);
           try {
             const { data: profileData, error } = await supabase
               .from('profiles')
@@ -45,6 +45,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
           }
         } else {
+          setUser(null);
           setProfile(null);
         }
         setLoading(false);
@@ -53,8 +54,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
       if (session?.user) {
+        setUser(session.user);
         supabase
           .from('profiles')
           .select('*')

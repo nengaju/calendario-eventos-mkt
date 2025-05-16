@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
@@ -20,6 +20,18 @@ const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [siteName, setSiteName] = useState('CALENDÁRIO DE EVENTOS - MKT');
+
+  // Get site name from local storage if available
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('themeSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      if (settings.siteName) {
+        setSiteName(settings.siteName);
+      }
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -69,7 +81,7 @@ const AdminLayout: React.FC = () => {
           <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 md:hidden">
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold">Kanban Admin</h1>
+          <h1 className="text-xl font-bold">{siteName}</h1>
         </div>
         
         <div className="flex items-center gap-4">
@@ -77,7 +89,7 @@ const AdminLayout: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                <span className="hidden sm:inline">{user?.username}</span>
+                <span className="hidden sm:inline">{user?.email}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>

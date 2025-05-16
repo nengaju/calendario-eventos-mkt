@@ -14,6 +14,7 @@ import MainLayout from "./components/layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { EventProvider } from "./context/EventContext";
+import { UsersProvider } from "./context/UserContext";
 import ThemeSettings from "./pages/admin/ThemeSettings";
 
 const queryClient = new QueryClient();
@@ -22,37 +23,39 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <EventProvider>
-          <Toaster />
-          <Sonner position="top-right" />
-          <BrowserRouter>
-            <Routes>
-              {/* Public Route */}
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected Routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route element={<MainLayout />}>
-                  {/* Admin Dashboard Routes */}
-                  <Route path="/admin" element={<Dashboard />} />
-                  <Route path="/admin/settings" element={<Settings />} />
-                  <Route path="/admin/theme" element={<ThemeSettings />} />
-                  
-                  {/* Admin-only Routes */}
-                  <Route element={<ProtectedRoute requireAdmin={true} />}>
-                    <Route path="/admin/users" element={<UsersPage />} />
+        <UsersProvider>
+          <EventProvider>
+            <Toaster />
+            <Sonner position="top-right" />
+            <BrowserRouter>
+              <Routes>
+                {/* Public Route */}
+                <Route path="/login" element={<Login />} />
+                
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<MainLayout />}>
+                    {/* Admin Dashboard Routes */}
+                    <Route path="/admin" element={<Dashboard />} />
+                    <Route path="/admin/settings" element={<Settings />} />
+                    <Route path="/admin/theme" element={<ThemeSettings />} />
+                    
+                    {/* Admin-only Routes */}
+                    <Route element={<ProtectedRoute requireAdmin={true} />}>
+                      <Route path="/admin/users" element={<UsersPage />} />
+                    </Route>
+                    
+                    {/* Calendar Routes */}
+                    <Route path="/" element={<Index />} />
                   </Route>
-                  
-                  {/* Calendar Routes */}
-                  <Route path="/" element={<Index />} />
                 </Route>
-              </Route>
-              
-              {/* Redirect from unknown routes to 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </EventProvider>
+                
+                {/* Redirect from unknown routes to 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </EventProvider>
+        </UsersProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

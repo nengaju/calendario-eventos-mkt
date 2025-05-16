@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useUsers } from '@/context/AuthContext';
+import { useUsers } from '@/context/UserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -21,7 +22,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { AssigneeType } from '@/types';
+import { AssigneeType, UserRole } from '@/types';
 
 const UserManagement: React.FC = () => {
   const { 

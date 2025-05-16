@@ -1,14 +1,15 @@
 
-import { AssigneeType, UserRole } from "./index";
+import { AssigneeType } from "./index";
 
-export type UserRole = "admin" | "editor" | "viewer";
+// We'll import UserRole from index.ts instead of redefining it
+import { UserRole } from "./index";
 
 export interface User {
   id: string;
-  username: string;
-  password: string; // This would be hashed in a real application
-  role: UserRole;
-  isActive: boolean;
+  username?: string; // Make username optional to match Supabase User type
+  password?: string; // This would be hashed in a real application
+  role?: UserRole;
+  isActive?: boolean;
 }
 
 export interface LoginCredentials {
