@@ -17,7 +17,7 @@ export interface User {
 interface NewUserData {
   username: string;
   password: string;
-  role: 'admin' | 'editor' | 'viewer';
+  role: UserRole;
   assignee?: AssigneeType;
   isActive: boolean;
 }
@@ -25,7 +25,7 @@ interface NewUserData {
 interface UsersContextType {
   users: User[];
   addUser: (userData: NewUserData) => Promise<void>;
-  updateUser: (user: User) => Promise<void>;
+  updateUser: (user: User, password?: string) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
   setUserRole: (id: string, role: UserRole) => Promise<void>;
   setUserAssignee: (id: string, assignee?: AssigneeType) => Promise<void>;
@@ -120,7 +120,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   // Update an existing user
-  const updateUser = async (user: User) => {
+  const updateUser = async (user: User, password?: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -131,6 +131,14 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         .eq('id', user.id);
 
       if (error) throw error;
+
+      // If password was provided, update it
+      if (password && password.trim() !== '') {
+        // Here you would need to use the Auth API to update the password
+        // This is just a placeholder as Supabase client doesn't directly support password updates
+        console.log('Would update password for user:', user.id);
+        // In a real app, you would call an API endpoint or Supabase function to update password
+      }
 
       // Update local state
       setUsers(prevUsers =>

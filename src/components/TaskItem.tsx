@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Task } from '@/types';
+import { Task, AssigneeType } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash, User, Check, X, Plus } from 'lucide-react';
@@ -101,7 +100,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
       if (typeof assignee === 'string') {
         return assignee === userId;
       }
-      return assignee.id === userId;
+      return assignee?.id === userId;
     });
   };
   
@@ -150,11 +149,11 @@ const TaskItem: React.FC<TaskItemProps> = ({
               // Handle both string and object type assignees
               const displayText = typeof assignee === 'string' 
                 ? assignee.substring(0, 2) 
-                : (assignee.username || '').substring(0, 2);
+                : (assignee?.username || '').substring(0, 2);
                 
               const isCurrentUser = typeof assignee === 'string' 
                 ? assignee === user?.id 
-                : assignee.id === user?.id;
+                : assignee?.id === user?.id;
                 
               return (
                 <Badge key={index} variant="outline" className={`${isCurrentUser ? 'bg-blue-100' : ''}`}>

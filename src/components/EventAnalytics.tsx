@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Event } from '@/types';
+import { Event, AssigneeType } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 
@@ -29,7 +29,9 @@ const EventAnalytics: React.FC<EventAnalyticsProps> = ({ event }) => {
   event.tasks.forEach(task => {
     if (task.assignees && task.assignees.length > 0) {
       task.assignees.forEach(assignee => {
-        const key = assignee.username;
+        // Handle both string and object assignee types
+        const key = typeof assignee === 'string' ? assignee : assignee.username || 'Unknown';
+        
         if (!assigneeMap.has(key)) {
           assigneeMap.set(key, { total: 0, completed: 0 });
         }

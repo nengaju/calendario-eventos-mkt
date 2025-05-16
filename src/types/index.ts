@@ -1,5 +1,5 @@
 
-export type AssigneeType = string;
+export type AssigneeType = string | { id: string; username: string; role?: string };
 export type CompanyType = "YATTA" | "FORBEL";
 export type UserRole = "admin" | "editor" | "viewer";
 

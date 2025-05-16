@@ -24,6 +24,15 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { AssigneeType, UserRole } from '@/types';
 
+// Interface for new user data that includes password
+interface NewUserData {
+  username: string;
+  password: string;
+  role: UserRole;
+  assignee?: AssigneeType;
+  isActive: boolean;
+}
+
 const UserManagement: React.FC = () => {
   const { 
     users, 
@@ -50,13 +59,16 @@ const UserManagement: React.FC = () => {
 
   const handleAddUser = () => {
     if (newUsername && newPassword) {
-      addUser({
+      // Create a userData object of type NewUserData to include the password
+      const userData: NewUserData = {
         username: newUsername,
         password: newPassword,
         role: newRole,
         assignee: newAssignee,
         isActive: true
-      });
+      };
+      
+      addUser(userData);
       
       // Reset form
       setNewUsername('');
@@ -71,11 +83,11 @@ const UserManagement: React.FC = () => {
     const user = users.find(u => u.id === userId);
     if (user) {
       setEditingUser(userId);
-      setEditUsername(user.username);
+      setEditUsername(user.username || '');
       setEditPassword(''); // Don't show the current password for security
-      setEditRole(user.role ?? 'viewer');
+      setEditRole(user.role || 'viewer');
       setEditAssignee(user.assignee);
-      setEditActive(user.isActive);
+      setEditActive(user.isActive || false);
       setIsEditDialogOpen(true);
     }
   };
@@ -86,14 +98,17 @@ const UserManagement: React.FC = () => {
     const user = users.find(u => u.id === editingUser);
     if (!user) return;
     
-    updateUser({
+    // Create a partial user update object without password property if empty
+    const userUpdate = {
       ...user,
       username: editUsername,
-      password: editPassword || undefined, // Keep existing password if no new one is provided
       role: editRole,
       assignee: editAssignee,
       isActive: editActive
-    });
+    };
+    
+    // Pass the password separately via addUser/updateUser
+    updateUser(userUpdate, editPassword);
     
     setIsEditDialogOpen(false);
   };

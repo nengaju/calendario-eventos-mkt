@@ -85,7 +85,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       if (tasksError) throw tasksError;
 
-      // Fetch task assignees
+      // Fetch task assignees with proper join
       const { data: assigneesData, error: assigneesError } = await supabase
         .from('task_assignees')
         .select(`
@@ -106,10 +106,22 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             // Find assignees for this task
             const taskAssignees = assigneesData
               .filter(assignee => assignee.task_id === task.id)
-              .map(assignee => assignee.profiles);
+              .map(assignee => {
+                // Safely access the profiles data, ensuring it exists
+                if (assignee && assignee.profiles) {
+                  return assignee.profiles;
+                }
+                // Fallback to just the user_id as string if profiles isn't available
+                return assignee.user_id;
+              });
 
             // Check if current user is assignee or creator
-            const isAssignee = taskAssignees.some(a => a.id === user?.id);
+            const isAssignee = taskAssignees.some(a => {
+              if (typeof a === 'string') {
+                return a === user?.id;
+              }
+              return a && a.id === user?.id;
+            });
             const isCreator = task.created_by === user?.id;
             const isAdmin = profile?.role === 'admin';
             const isEditor = profile?.role === 'editor';
