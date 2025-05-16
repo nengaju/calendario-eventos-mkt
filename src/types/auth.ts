@@ -10,6 +10,7 @@ export interface User {
   password?: string; // This would be hashed in a real application
   role?: UserRole;
   isActive?: boolean;
+  email?: string; // Add email field for Supabase compatibility
 }
 
 export interface LoginCredentials {

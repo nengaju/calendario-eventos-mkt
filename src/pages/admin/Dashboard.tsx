@@ -13,7 +13,7 @@ const Dashboard: React.FC = () => {
   // Count tasks assigned to the current user
   const userTasks = events.flatMap(event => 
     event.tasks.filter(task => 
-      task.assignee === user?.assignee
+      task.assignees?.includes(user?.id || '')
     )
   );
   

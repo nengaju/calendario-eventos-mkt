@@ -37,14 +37,14 @@ const UserManagement: React.FC = () => {
 
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
+  const [newRole, setNewRole] = useState<UserRole>('viewer');
   const [newAssignee, setNewAssignee] = useState<AssigneeType | undefined>(undefined);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editUsername, setEditUsername] = useState('');
   const [editPassword, setEditPassword] = useState('');
-  const [editRole, setEditRole] = useState<'admin' | 'user'>('user');
+  const [editRole, setEditRole] = useState<UserRole>('viewer');
   const [editAssignee, setEditAssignee] = useState<AssigneeType | undefined>(undefined);
   const [editActive, setEditActive] = useState(true);
 
@@ -61,7 +61,7 @@ const UserManagement: React.FC = () => {
       // Reset form
       setNewUsername('');
       setNewPassword('');
-      setNewRole('user');
+      setNewRole('viewer');
       setNewAssignee(undefined);
       setIsAddDialogOpen(false);
     }
@@ -73,7 +73,7 @@ const UserManagement: React.FC = () => {
       setEditingUser(userId);
       setEditUsername(user.username);
       setEditPassword(''); // Don't show the current password for security
-      setEditRole(user.role);
+      setEditRole(user.role ?? 'viewer');
       setEditAssignee(user.assignee);
       setEditActive(user.isActive);
       setIsEditDialogOpen(true);
@@ -89,7 +89,7 @@ const UserManagement: React.FC = () => {
     updateUser({
       ...user,
       username: editUsername,
-      password: editPassword || user.password, // Keep existing password if no new one is provided
+      password: editPassword || undefined, // Keep existing password if no new one is provided
       role: editRole,
       assignee: editAssignee,
       isActive: editActive
@@ -145,13 +145,14 @@ const UserManagement: React.FC = () => {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="role">Função</Label>
-                <Select value={newRole} onValueChange={(value) => setNewRole(value as 'admin' | 'user')}>
+                <Select value={newRole} onValueChange={(value) => setNewRole(value as UserRole)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a função" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="user">Usuário</SelectItem>
+                    <SelectItem value="editor">Editor</SelectItem>
+                    <SelectItem value="viewer">Visualizador</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -198,7 +199,8 @@ const UserManagement: React.FC = () => {
               <TableCell className="font-medium">{user.username}</TableCell>
               <TableCell>
                 <Badge variant={user.role === 'admin' ? 'default' : 'outline'}>
-                  {user.role === 'admin' ? 'Administrador' : 'Usuário'}
+                  {user.role === 'admin' ? 'Administrador' : 
+                   user.role === 'editor' ? 'Editor' : 'Visualizador'}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -238,7 +240,7 @@ const UserManagement: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    onClick={() => setUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                    onClick={() => setUserRole(user.id, user.role === 'admin' ? 'viewer' : 'admin')}
                   >
                     {user.role === 'admin' ? (
                       <ShieldOff className="h-4 w-4" />
@@ -293,13 +295,14 @@ const UserManagement: React.FC = () => {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-role">Função</Label>
-              <Select value={editRole} onValueChange={(value) => setEditRole(value as 'admin' | 'user')}>
+              <Select value={editRole} onValueChange={(value) => setEditRole(value as UserRole)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="editor">Editor</SelectItem>
+                  <SelectItem value="viewer">Visualizador</SelectItem>
                 </SelectContent>
               </Select>
             </div>

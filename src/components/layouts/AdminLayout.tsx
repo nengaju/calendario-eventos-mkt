@@ -89,7 +89,7 @@ const AdminLayout: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                <span className="hidden sm:inline">{user?.email}</span>
+                <span className="hidden sm:inline">{user?.username || user?.email}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>

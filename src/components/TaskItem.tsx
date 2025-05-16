@@ -24,6 +24,12 @@ interface TaskItemProps {
   eventId?: string;
 }
 
+interface UserWithProfile {
+  id: string;
+  username: string;
+  role: string;
+}
+
 const TaskItem: React.FC<TaskItemProps> = ({ 
   task, 
   onToggleComplete,
@@ -35,7 +41,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const { addTaskAssignee, removeTaskAssignee } = useEvents();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
-  const [availableUsers, setAvailableUsers] = useState<{id: string, username: string, role: string}[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<UserWithProfile[]>([]);
   
   // Check if the current user has permission to interact with this task
   const canInteract = isAdmin || isEditor || task.editable;
@@ -90,7 +96,13 @@ const TaskItem: React.FC<TaskItemProps> = ({
   
   const isAssigned = (userId: string): boolean => {
     if (!task.assignees) return false;
-    return task.assignees.some(assignee => assignee.id === userId);
+    return task.assignees.some(assignee => {
+      // Handle both string and object type assignees
+      if (typeof assignee === 'string') {
+        return assignee === userId;
+      }
+      return assignee.id === userId;
+    });
   };
   
   if (isEditing) {
@@ -134,11 +146,22 @@ const TaskItem: React.FC<TaskItemProps> = ({
       <div className="flex items-center gap-2">
         {task.assignees && task.assignees.length > 0 && (
           <div className="flex -space-x-1 overflow-hidden mr-1">
-            {task.assignees.slice(0, 3).map((assignee, index) => (
-              <Badge key={index} variant="outline" className={`${assignee.id === user?.id ? 'bg-blue-100' : ''}`}>
-                {assignee.username.substring(0, 2)}
-              </Badge>
-            ))}
+            {task.assignees.slice(0, 3).map((assignee, index) => {
+              // Handle both string and object type assignees
+              const displayText = typeof assignee === 'string' 
+                ? assignee.substring(0, 2) 
+                : (assignee.username || '').substring(0, 2);
+                
+              const isCurrentUser = typeof assignee === 'string' 
+                ? assignee === user?.id 
+                : assignee.id === user?.id;
+                
+              return (
+                <Badge key={index} variant="outline" className={`${isCurrentUser ? 'bg-blue-100' : ''}`}>
+                  {displayText}
+                </Badge>
+              );
+            })}
             
             {task.assignees.length > 3 && (
               <Badge variant="outline">

@@ -26,7 +26,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
-          setUser(session.user);
+          // Convert Supabase user to our User type
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            username: session.user.email || '',
+          });
+          
           try {
             const { data: profileData, error } = await supabase
               .from('profiles')
@@ -55,7 +61,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser(session.user);
+        // Convert Supabase user to our User type
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          username: session.user.email || '',
+        });
+        
         supabase
           .from('profiles')
           .select('*')
