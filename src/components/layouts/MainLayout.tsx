@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
@@ -20,6 +20,18 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [siteName, setSiteName] = useState('CALENDÁRIO DE EVENTOS - MKT');
+
+  // Get site name from local storage if available
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('themeSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      if (settings.siteName) {
+        setSiteName(settings.siteName);
+      }
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -72,7 +84,7 @@ const MainLayout: React.FC = () => {
       {/* Persistent Sidebar for Desktop */}
       <aside className="hidden md:block w-64 bg-white border-r shadow-sm">
         <div className="p-4 border-b">
-          <h1 className="text-xl font-bold">Kanban Admin</h1>
+          <h1 className="text-xl font-bold">{siteName}</h1>
         </div>
         <nav className="p-4">
           <ul className="space-y-2">
@@ -112,7 +124,7 @@ const MainLayout: React.FC = () => {
         `}
       >
         <div className="flex justify-between items-center p-4 border-b">
-          <h1 className="font-bold">Menu</h1>
+          <h1 className="font-bold">{siteName}</h1>
           <Button variant="ghost" size="icon" onClick={closeSidebar}>
             <X className="h-5 w-5" />
           </Button>
@@ -150,7 +162,7 @@ const MainLayout: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={toggleMobileSidebar} className="mr-2 md:hidden">
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold">Kanban Admin</h1>
+            <h1 className="text-xl font-bold">{siteName}</h1>
           </div>
           
           <div className="flex items-center gap-4">
