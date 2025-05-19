@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { Event, Task, CompanyType, AssigneeType } from '@/types';
 import { format } from 'date-fns';
@@ -114,10 +113,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 // Fallback to just the user_id as string if profiles isn't available
                 return assignee.user_id;
               })
-              // Filter out any null or undefined values to avoid "never" type issues
-              .filter((assignee): assignee is (string | { id: string; username: string; role?: string }) => 
-                assignee !== null && assignee !== undefined
-              );
+              // Filter out any null or undefined values
+              .filter(Boolean) as AssigneeType[];
 
             // Check if current user is assignee or creator
             const isAssignee = taskAssignees.some(a => {
@@ -290,9 +287,13 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (taskData.assignees && taskData.assignees.length > 0) {
         const assigneePromises = taskData.assignees.map(assigneeId => {
           // Ensure assigneeId is a string, not an object
-          const userId = typeof assigneeId === 'string' ? assigneeId : 
-                        (assigneeId && typeof assigneeId === 'object' && 'id' in assigneeId) ? 
-                        assigneeId.id : null;
+          let userId: string | null = null;
+          
+          if (typeof assigneeId === 'string') {
+            userId = assigneeId;
+          } else if (assigneeId && typeof assigneeId === 'object' && 'id' in assigneeId) {
+            userId = assigneeId.id;
+          }
           
           if (!userId) return Promise.resolve(); // Skip if userId is null
           
@@ -304,6 +305,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             });
         });
         
+        // Filter out any undefined promises before awaiting them
         await Promise.all(assigneePromises.filter(Boolean));
       }
       
