@@ -115,7 +115,9 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 return assignee.user_id;
               })
               // Filter out any null or undefined values to avoid "never" type issues
-              .filter(assignee => assignee !== null && assignee !== undefined);
+              .filter((assignee): assignee is (string | { id: string; username: string; role?: string }) => 
+                assignee !== null && assignee !== undefined
+              );
 
             // Check if current user is assignee or creator
             const isAssignee = taskAssignees.some(a => {
@@ -288,7 +290,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (taskData.assignees && taskData.assignees.length > 0) {
         const assigneePromises = taskData.assignees.map(assigneeId => {
           // Ensure assigneeId is a string, not an object
-          const userId = typeof assigneeId === 'string' ? assigneeId : assigneeId.id;
+          const userId = typeof assigneeId === 'string' ? assigneeId : 
+                        (assigneeId && typeof assigneeId === 'object' && 'id' in assigneeId) ? 
+                        assigneeId.id : null;
+          
+          if (!userId) return Promise.resolve(); // Skip if userId is null
           
           return supabase
             .from('task_assignees')
@@ -298,7 +304,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             });
         });
         
-        await Promise.all(assigneePromises);
+        await Promise.all(assigneePromises.filter(Boolean));
       }
       
       toast({
