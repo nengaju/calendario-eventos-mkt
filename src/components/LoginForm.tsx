@@ -76,6 +76,11 @@ const LoginForm: React.FC = () => {
               autoComplete="current-password"
             />
           </div>
+          
+          <div className="text-sm text-gray-500">
+            <p>Administrador padrão: nengaju@gmail.com</p>
+            <p>Senha para testes: Secreta@183183</p>
+          </div>
         </CardContent>
         <CardFooter>
           <Button className="w-full" type="submit" disabled={isLoading}>

@@ -210,11 +210,24 @@ const CalendarView = () => {
 };
 
 const Index = () => {
+  const [siteName, setSiteName] = useState('CALENDÁRIO DE EVENTOS - MKT');
+  
+  // Get site name from local storage if available
+  React.useEffect(() => {
+    const savedSettings = localStorage.getItem('themeSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      if (settings.siteName) {
+        setSiteName(settings.siteName);
+      }
+    }
+  }, []);
+  
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold text-gray-900">CALENDÁRIO DE EVENTOS - MKT</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{siteName}</h1>
         </div>
       </header>
       

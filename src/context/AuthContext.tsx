@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (session?.user) {
           // Convert Supabase user to our User type
           setUser({
@@ -33,23 +33,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             username: session.user.email || '',
           });
           
-          try {
-            const { data: profileData, error } = await supabase
+          // Defer profile fetching to avoid auth deadlocks
+          setTimeout(() => {
+            supabase
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
-              .single();
-
-            if (error) throw error;
-            setProfile(profileData);
-          } catch (error) {
-            console.error('Error fetching profile:', error);
-            toast({
-              title: "Erro",
-              description: "Erro ao carregar perfil do usuário",
-              variant: "destructive",
-            });
-          }
+              .single()
+              .then(({ data: profileData, error }) => {
+                if (error) {
+                  console.error('Error fetching profile:', error);
+                } else if (profileData) {
+                  setProfile(profileData);
+                }
+              });
+          }, 0);
         } else {
           setUser(null);
           setProfile(null);
