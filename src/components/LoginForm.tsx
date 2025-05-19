@@ -5,21 +5,29 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogIn } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InfoIcon } from 'lucide-react';
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
     try {
-      await login({ username, password });
+      const result = await login({ username, password });
+      if (!result) {
+        setError('Usuário ou senha inválidos. Tente novamente.');
+      }
     } catch (error) {
       console.error('Login error:', error);
+      setError('Ocorreu um erro ao fazer login. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -35,6 +43,23 @@ const LoginForm: React.FC = () => {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          <Alert className="mb-4 bg-blue-50">
+            <InfoIcon className="h-4 w-4 mr-2" />
+            <AlertDescription>
+              Administradores disponíveis:
+              <ul className="list-disc ml-5 mt-1">
+                <li>Usuário: JUNIOR, Senha: Secreta@183183</li>
+                <li>Usuário: nengaju@gmail.com, Senha: Secreta@183183</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+          
           <div className="space-y-2">
             <label htmlFor="username" className="text-sm font-medium">
               Usuário
