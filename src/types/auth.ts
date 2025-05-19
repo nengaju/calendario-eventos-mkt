@@ -11,6 +11,7 @@ export interface User {
   role?: UserRole;
   isActive?: boolean;
   email?: string; // Add email field for Supabase compatibility
+  assignee?: string | { id: string; username: string; role?: string }; // Match AssigneeType
 }
 
 export interface LoginCredentials {

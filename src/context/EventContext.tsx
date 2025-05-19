@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { Event, Task, CompanyType } from '@/types';
 import { format } from 'date-fns';
@@ -284,14 +283,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       // Add assignees if provided
       if (taskData.assignees && taskData.assignees.length > 0) {
-        const assigneePromises = taskData.assignees.map(assigneeId => 
-          supabase
+        const assigneePromises = taskData.assignees.map(assigneeId => {
+          // Ensure assigneeId is a string, not an object
+          const userId = typeof assigneeId === 'string' ? assigneeId : assigneeId.id;
+          
+          return supabase
             .from('task_assignees')
             .insert({
               task_id: taskResult.id,
-              user_id: assigneeId
-            })
-        );
+              user_id: userId
+            });
+        });
         
         await Promise.all(assigneePromises);
       }

@@ -29,7 +29,7 @@ interface NewUserData {
   username: string;
   password: string;
   role: UserRole;
-  assignee?: AssigneeType;
+  assignee?: string;
   isActive: boolean;
 }
 
@@ -47,14 +47,14 @@ const UserManagement: React.FC = () => {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('viewer');
-  const [newAssignee, setNewAssignee] = useState<AssigneeType | undefined>(undefined);
+  const [newAssignee, setNewAssignee] = useState<string | undefined>(undefined);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editUsername, setEditUsername] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [editRole, setEditRole] = useState<UserRole>('viewer');
-  const [editAssignee, setEditAssignee] = useState<AssigneeType | undefined>(undefined);
+  const [editAssignee, setEditAssignee] = useState<string | undefined>(undefined);
   const [editActive, setEditActive] = useState(true);
 
   const handleAddUser = () => {
@@ -86,7 +86,13 @@ const UserManagement: React.FC = () => {
       setEditUsername(user.username || '');
       setEditPassword(''); // Don't show the current password for security
       setEditRole(user.role || 'viewer');
-      setEditAssignee(user.assignee);
+      
+      // Convert assignee to string if it's an object
+      const assignee = user.assignee ? 
+        (typeof user.assignee === 'string' ? user.assignee : user.assignee.id) 
+        : undefined;
+      
+      setEditAssignee(assignee);
       setEditActive(user.isActive || false);
       setIsEditDialogOpen(true);
     }
@@ -119,7 +125,13 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const assignees: AssigneeType[] = ["MARIANO", "RUBENS", "GIOVANNA", "YAGO", "JÚNIOR"];
+  // Helper function to format assignee display
+  const formatAssignee = (assignee: AssigneeType | undefined): string => {
+    if (!assignee) return '';
+    return typeof assignee === 'string' ? assignee : assignee.username;
+  };
+
+  const assignees: string[] = ["MARIANO", "RUBENS", "GIOVANNA", "YAGO", "JÚNIOR"];
 
   return (
     <div className="space-y-6">
@@ -175,7 +187,7 @@ const UserManagement: React.FC = () => {
                 <Label htmlFor="assignee">Responsável</Label>
                 <Select 
                   value={newAssignee} 
-                  onValueChange={(value) => setNewAssignee(value as AssigneeType || undefined)}
+                  onValueChange={(value) => setNewAssignee(value !== "none" ? value : undefined)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o responsável" />
@@ -221,7 +233,7 @@ const UserManagement: React.FC = () => {
               <TableCell>
                 {user.assignee ? (
                   <Badge variant="outline" className="bg-gray-100">
-                    {user.assignee}
+                    {formatAssignee(user.assignee)}
                   </Badge>
                 ) : (
                   <span className="text-gray-500">-</span>
@@ -325,7 +337,7 @@ const UserManagement: React.FC = () => {
               <Label htmlFor="edit-assignee">Responsável</Label>
               <Select 
                 value={editAssignee} 
-                onValueChange={(value) => setEditAssignee(value === "none" ? undefined : value as AssigneeType)}
+                onValueChange={(value) => setEditAssignee(value === "none" ? undefined : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o responsável" />
