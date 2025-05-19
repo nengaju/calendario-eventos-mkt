@@ -1,5 +1,6 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { Event, Task, CompanyType } from '@/types';
+import { Event, Task, CompanyType, AssigneeType } from '@/types';
 import { format } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,7 +113,9 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 }
                 // Fallback to just the user_id as string if profiles isn't available
                 return assignee.user_id;
-              });
+              })
+              // Filter out any null or undefined values to avoid "never" type issues
+              .filter(assignee => assignee !== null && assignee !== undefined);
 
             // Check if current user is assignee or creator
             const isAssignee = taskAssignees.some(a => {
