@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogIn } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon } from 'lucide-react';
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
@@ -48,17 +47,6 @@ const LoginForm: React.FC = () => {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
-          <Alert className="mb-4 bg-blue-50">
-            <InfoIcon className="h-4 w-4 mr-2" />
-            <AlertDescription>
-              Administradores disponíveis:
-              <ul className="list-disc ml-5 mt-1">
-                <li>Usuário: JUNIOR, Senha: Secreta@183183</li>
-                <li>Usuário: nengaju@gmail.com, Senha: Secreta@183183</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
           
           <div className="space-y-2">
             <label htmlFor="username" className="text-sm font-medium">
