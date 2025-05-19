@@ -28,7 +28,7 @@ type ThemeSettings = {
 
 // Valores padrão
 const defaultTheme: ThemeSettings = {
-  siteName: 'Kanban Admin',
+  siteName: 'CALENDÁRIO DE EVENTOS - MKT',
   primaryColor: '#3b82f6', // blue-500
   secondaryColor: '#6366f1', // indigo-500
   accentColor: '#8b5cf6', // purple-500
