@@ -26,16 +26,23 @@ const UsersPage: React.FC = () => {
         console.log(`Creating ${email} admin user...`);
         
         try {
-          // First check if the user exists in auth but not in our local state
-          const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email);
+          // We can't use getUserByEmail as it doesn't exist in the API
+          // Instead we'll search for the user in our profiles table
+          const { data: existingUserData, error: userError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', email)
+            .maybeSingle();
+            
+          if (userError) throw userError;
           
-          if (existingUser) {
-            // User exists in auth but not in our local state with admin role
+          if (existingUserData) {
+            // User exists in profiles but not in our local state with admin role
             // Update role directly in profiles table
             const { error: updateError } = await supabase
               .from('profiles')
               .update({ role: 'admin' })
-              .eq('id', existingUser.user.id);
+              .eq('id', existingUserData.id);
               
             if (updateError) throw updateError;
             
