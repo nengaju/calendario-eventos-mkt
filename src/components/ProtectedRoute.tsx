@@ -19,11 +19,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requireAdmin = false })
     return <Navigate to="/login" replace />;
   }
 
-  // Check if admin access is required but user is not an admin
-  if (requireAdmin && !isAdmin) {
-    console.log("Admin access required but user is not admin, redirecting to dashboard");
-    return <Navigate to="/admin" replace />;
-  }
+  // Todos os usuários autenticados são considerados administradores
+  // Para manter compatibilidade com o código existente
 
   // If user is authenticated (and is admin if required), render the child routes
   return <Outlet />;

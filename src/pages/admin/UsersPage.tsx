@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import UserManagement from '@/components/admin/UserManagement';
 import { useUsers } from '@/context/UserContext';
 import { toast } from '@/components/ui/use-toast';
@@ -10,8 +10,8 @@ const UsersPage: React.FC = () => {
   const { users, addUser } = useUsers();
   const { isAuthenticated, user } = useAuth();
 
-  // Check for admin users and create them if they don't exist
-  useEffect(() => {
+  // Usamos useEffect para verificar se há usuários administradores existentes
+  React.useEffect(() => {
     if (!isAuthenticated) return;
     
     console.log("Checking for admin users...");

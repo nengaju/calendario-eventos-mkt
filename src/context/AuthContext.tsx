@@ -15,10 +15,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   // Check if the user is authenticated
   const isAuthenticated = !!user;
-  // Check user roles
-  const isAdmin = profile?.role === 'admin';
-  const isEditor = profile?.role === 'editor' || isAdmin;
-  const isViewer = true; // All authenticated users are at least viewers
+  // Set isAdmin to true for all authenticated users
+  const isAdmin = isAuthenticated;
+  const isEditor = isAuthenticated;
+  const isViewer = isAuthenticated;
 
   // Initialize auth state from Supabase
   useEffect(() => {
@@ -43,8 +43,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               .then(({ data: profileData, error }) => {
                 if (error) {
                   console.error('Error fetching profile:', error);
+                  
+                  // If profile doesn't exist, create one with admin role
+                  if (error.code === 'PGRST116') {
+                    supabase
+                      .from('profiles')
+                      .insert({
+                        id: session.user.id,
+                        username: session.user.email || '',
+                        role: 'admin'
+                      })
+                      .then(({ error: insertError }) => {
+                        if (insertError) {
+                          console.error('Error creating profile:', insertError);
+                        } else {
+                          // Set profile with admin role
+                          setProfile({
+                            id: session.user.id,
+                            username: session.user.email || '',
+                            role: 'admin'
+                          });
+                        }
+                      });
+                  }
                 } else if (profileData) {
-                  setProfile(profileData);
+                  // Ensure profile has admin role
+                  if (profileData.role !== 'admin') {
+                    supabase
+                      .from('profiles')
+                      .update({ role: 'admin' })
+                      .eq('id', session.user.id)
+                      .then(() => {
+                        setProfile({
+                          ...profileData,
+                          role: 'admin'
+                        });
+                      });
+                  } else {
+                    setProfile(profileData);
+                  }
                 }
               });
           }, 0);
@@ -72,8 +109,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .eq('id', session.user.id)
           .single()
           .then(({ data, error }) => {
-            if (!error && data) {
-              setProfile(data);
+            if (error) {
+              // If profile doesn't exist, create one with admin role
+              if (error.code === 'PGRST116') {
+                supabase
+                  .from('profiles')
+                  .insert({
+                    id: session.user.id,
+                    username: session.user.email || '',
+                    role: 'admin'
+                  })
+                  .then(({ error: insertError }) => {
+                    if (!insertError) {
+                      setProfile({
+                        id: session.user.id,
+                        username: session.user.email || '',
+                        role: 'admin'
+                      });
+                    }
+                  });
+              }
+            } else if (data) {
+              // Ensure profile has admin role
+              if (data.role !== 'admin') {
+                supabase
+                  .from('profiles')
+                  .update({ role: 'admin' })
+                  .eq('id', session.user.id)
+                  .then(() => {
+                    setProfile({
+                      ...data,
+                      role: 'admin'
+                    });
+                  });
+              } else {
+                setProfile(data);
+              }
             }
             setLoading(false);
           });
