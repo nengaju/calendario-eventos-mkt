@@ -90,10 +90,20 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       if (authError) throw authError;
 
-      // Profile creation is handled by Supabase trigger we set up in SQL
-
-      // Update the UI with new user
+      // Make sure profile is created with correct role
       if (authData.user) {
+        // Since the trigger might not set the role correctly, explicitly update it
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: authData.user.id,
+            username: userData.username,
+            role: userData.role,
+          }, { onConflict: 'id' });
+          
+        if (profileError) throw profileError;
+        
+        // Update the UI with new user
         const newUser = {
           id: authData.user.id,
           username: userData.username,
@@ -108,6 +118,8 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           title: "Sucesso",
           description: "Usuário criado com sucesso",
         });
+        
+        console.log(`${userData.username} created successfully with role ${userData.role}`);
       }
     } catch (error: any) {
       console.error('Error adding user:', error.message);
@@ -134,10 +146,12 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       // If password was provided, update it
       if (password && password.trim() !== '') {
-        // Here you would need to use the Auth API to update the password
-        // This is just a placeholder as Supabase client doesn't directly support password updates
+        // Here we would need admin access to update the password
         console.log('Would update password for user:', user.id);
-        // In a real app, you would call an API endpoint or Supabase function to update password
+        toast({
+          title: "Informação",
+          description: "Atualização de senha só é possível através do painel do Supabase",
+        });
       }
 
       // Update local state

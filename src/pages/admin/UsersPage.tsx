@@ -4,6 +4,7 @@ import UserManagement from '@/components/admin/UserManagement';
 import { useUsers } from '@/context/UserContext';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const UsersPage: React.FC = () => {
   const { users, addUser } = useUsers();
@@ -15,77 +16,67 @@ const UsersPage: React.FC = () => {
     
     console.log("Checking for admin users...");
     
-    // Check for nengaju@gmail.com admin first (primary admin)
-    const hasEmailAdmin = users.some(
-      u => u.username === "nengaju@gmail.com" && u.role === "admin"
-    );
-
-    console.log("Has nengaju@gmail.com admin:", hasEmailAdmin);
-
-    if (!hasEmailAdmin) {
-      console.log("Creating nengaju@gmail.com admin user...");
-      // Create nengaju@gmail.com admin user
-      addUser({
-        username: "nengaju@gmail.com",
-        password: "Secreta@183183",
-        role: "admin",
-        isActive: true
-      }).then(() => {
-        toast({
-          title: "Administrador configurado",
-          description: "Usuário nengaju@gmail.com foi configurado como administrador do sistema",
-        });
-        console.log("nengaju@gmail.com admin created successfully");
-      }).catch(error => {
-        console.error("Erro ao configurar usuário admin:", error);
-      });
-    }
+    const setupAdminUser = async (email: string, password: string, displayName: string, isBackup: boolean = false) => {
+      // Check if admin exists in users array
+      const adminExists = users.some(u => u.username === email && u.role === "admin");
+      
+      console.log(`Has ${email} admin:`, adminExists);
+      
+      if (!adminExists) {
+        console.log(`Creating ${email} admin user...`);
+        
+        try {
+          // First check if the user exists in auth but not in our local state
+          const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email);
+          
+          if (existingUser) {
+            // User exists in auth but not in our local state with admin role
+            // Update role directly in profiles table
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ role: 'admin' })
+              .eq('id', existingUser.user.id);
+              
+            if (updateError) throw updateError;
+            
+            toast({
+              title: `Administrador ${isBackup ? 'backup ' : ''}atualizado`,
+              description: `Usuário ${email} foi configurado como administrador${isBackup ? ' backup' : ''} do sistema`,
+            });
+            
+            console.log(`${email} admin updated successfully`);
+          } else {
+            // Create new admin user
+            await addUser({
+              username: email,
+              password: password,
+              role: "admin",
+              isActive: true
+            });
+            
+            toast({
+              title: `Administrador ${isBackup ? 'backup ' : ''}configurado`,
+              description: `Usuário ${email} foi configurado como administrador${isBackup ? ' backup' : ''} do sistema`,
+            });
+            
+            console.log(`${email} admin created successfully`);
+          }
+        } catch (error: any) {
+          console.error(`Erro ao configurar usuário admin ${email}:`, error);
+          toast({
+            title: "Erro",
+            description: `Falha ao configurar usuário ${email}: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+      }
+    };
     
-    // Create a new admin account as backup
-    const hasAdminBackup = users.some(
-      u => u.username === "admin@sistema.com" && u.role === "admin"
-    );
-
-    if (!hasAdminBackup) {
-      console.log("Creating admin@sistema.com backup admin user...");
-      // Create admin@sistema.com admin user
-      addUser({
-        username: "admin@sistema.com",
-        password: "Admin@2025",
-        role: "admin",
-        isActive: true
-      }).then(() => {
-        toast({
-          title: "Administrador backup configurado",
-          description: "Usuário admin@sistema.com foi configurado como administrador backup do sistema",
-        });
-        console.log("admin@sistema.com backup admin created successfully");
-      }).catch(error => {
-        console.error("Erro ao configurar usuário admin backup:", error);
-      });
-    }
+    // Setup all admin users
+    setupAdminUser("nengaju@gmail.com", "Secreta@183183", "Administrador principal");
+    setupAdminUser("admin@sistema.com", "Admin@2025", "Administrador backup", true);
+    setupAdminUser("JUNIOR", "Secreta@183183", "Administrador backup", true);
     
-    // JUNIOR is kept as a backup admin
-    const hasJuniorAdmin = users.some(
-      u => u.username === "JUNIOR" && u.role === "admin"
-    );
-
-    console.log("Has JUNIOR admin:", hasJuniorAdmin);
-
-    if (!hasJuniorAdmin) {
-      console.log("Creating JUNIOR admin user...");
-      // Create JUNIOR admin user
-      addUser({
-        username: "JUNIOR",
-        password: "Secreta@183183",
-        role: "admin",
-        isActive: true
-      }).then(() => {
-        console.log("JUNIOR admin created successfully");
-      }).catch(error => {
-        console.error("Erro ao criar usuário admin:", error);
-      });
-    }
   }, [users, addUser, isAuthenticated, user]);
 
   return <UserManagement />;
