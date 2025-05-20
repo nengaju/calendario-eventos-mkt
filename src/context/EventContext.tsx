@@ -30,34 +30,45 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Load events from Supabase on mount and when user changes
   useEffect(() => {
-    loadEvents();
+    if (user) {
+      loadEvents();
+    } else {
+      setEvents([]);
+      setLoading(false);
+    }
     
-    // Set up realtime subscription for events
-    const channel = supabase
-      .channel('public:events')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'events' }, 
-        (payload) => {
-          loadEvents();
-        }
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'tasks' }, 
-        (payload) => {
-          loadEvents();
-        }
-      )
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'task_assignees' },
-        (payload) => {
-          loadEvents();
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Set up realtime subscription for events only if user is logged in
+    if (user) {
+      const channel = supabase
+        .channel('public:events')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'events' }, 
+          () => {
+            loadEvents();
+          }
+        )
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'tasks' }, 
+          () => {
+            loadEvents();
+          }
+        )
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'task_assignees' },
+          () => {
+            loadEvents();
+          }
+        )
+        .subscribe((status, err) => {
+          if (status !== 'SUBSCRIBED' || err) {
+            console.error('Error subscribing to events:', status, err);
+          }
+        });
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user]);
 
   // Function to load events from Supabase
@@ -75,14 +86,27 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         .from('events')
         .select('*');
 
-      if (eventsError) throw eventsError;
+      if (eventsError) {
+        console.error('Error fetching events:', eventsError);
+        throw eventsError;
+      }
+
+      // If no events data, set empty array and return early
+      if (!eventsData || eventsData.length === 0) {
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
 
       // Fetch tasks
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*');
 
-      if (tasksError) throw tasksError;
+      if (tasksError) {
+        console.error('Error fetching tasks:', tasksError);
+        throw tasksError;
+      }
 
       // Fetch task assignees with proper join
       const { data: assigneesData, error: assigneesError } = await supabase
@@ -94,50 +118,57 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           profiles:user_id (id, username, role)
         `);
 
-      if (assigneesError) throw assigneesError;
+      if (assigneesError) {
+        console.error('Error fetching task assignees:', assigneesError);
+        throw assigneesError;
+      }
 
-      // Process data
+      // Process data with proper error handling
       const processedEvents = eventsData.map(event => {
         // Find tasks for this event
         const eventTasks = tasksData
-          .filter(task => task.event_id === event.id)
-          .map(task => {
-            // Find assignees for this task
-            const taskAssignees = assigneesData
-              .filter(assignee => assignee.task_id === task.id)
-              .map(assignee => {
-                // Safely access the profiles data, ensuring it exists
-                if (assignee && assignee.profiles) {
-                  return assignee.profiles;
-                }
-                // Fallback to just the user_id as string if profiles isn't available
-                return assignee.user_id;
+          ? tasksData
+              .filter(task => task && task.event_id === event.id)
+              .map(task => {
+                // Find assignees for this task
+                const taskAssignees = assigneesData
+                  ? assigneesData
+                      .filter(assignee => assignee && assignee.task_id === task.id)
+                      .map(assignee => {
+                        // Safely access the profiles data, ensuring it exists
+                        if (assignee && assignee.profiles) {
+                          return assignee.profiles;
+                        }
+                        // Fallback to just the user_id as string if profiles isn't available
+                        return assignee.user_id;
+                      })
+                      // Filter out any null or undefined values
+                      .filter(Boolean) as AssigneeType[]
+                  : [];
+
+                // Check if current user is assignee or creator
+                const isAssignee = taskAssignees.some(a => {
+                  if (typeof a === 'string') {
+                    return a === user?.id;
+                  }
+                  return a && a.id === user?.id;
+                });
+                const isCreator = task.created_by === user?.id;
+                const isAdmin = profile?.role === 'admin';
+                const isEditor = profile?.role === 'editor';
+                
+                // Determine if the task is editable by this user
+                const editable = isAdmin || isCreator || (isAssignee && isEditor);
+
+                return {
+                  id: task.id,
+                  title: task.title,
+                  completed: task.completed,
+                  assignees: taskAssignees,
+                  editable
+                };
               })
-              // Filter out any null or undefined values
-              .filter(Boolean) as AssigneeType[];
-
-            // Check if current user is assignee or creator
-            const isAssignee = taskAssignees.some(a => {
-              if (typeof a === 'string') {
-                return a === user?.id;
-              }
-              return a && a.id === user?.id;
-            });
-            const isCreator = task.created_by === user?.id;
-            const isAdmin = profile?.role === 'admin';
-            const isEditor = profile?.role === 'editor';
-            
-            // Determine if the task is editable by this user
-            const editable = isAdmin || isCreator || (isAssignee && isEditor);
-
-            return {
-              id: task.id,
-              title: task.title,
-              completed: task.completed,
-              assignees: taskAssignees,
-              editable
-            };
-          });
+          : [];
 
         return {
           id: event.id,
@@ -155,7 +186,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.error('Error loading events:', error);
       toast({
         title: "Erro",
-        description: "Erro ao carregar eventos",
+        description: "Erro ao carregar eventos. Por favor, tente novamente mais tarde.",
         variant: "destructive"
       });
     } finally {

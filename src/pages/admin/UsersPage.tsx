@@ -9,7 +9,7 @@ const UsersPage: React.FC = () => {
   const { users, addUser } = useUsers();
   const { isAuthenticated } = useAuth();
 
-  // Check if JUNIOR admin and nengaju@gmail.com admin exist and create them if not
+  // Check if nengaju@gmail.com admin exist and create it if not
   useEffect(() => {
     if (!isAuthenticated) return;
     
@@ -24,7 +24,7 @@ const UsersPage: React.FC = () => {
 
     if (!hasEmailAdmin) {
       console.log("Creating nengaju@gmail.com admin user...");
-      // Create nengaju@gmail.com admin user or update if exists
+      // Create nengaju@gmail.com admin user
       addUser({
         username: "nengaju@gmail.com",
         password: "Secreta@183183",
