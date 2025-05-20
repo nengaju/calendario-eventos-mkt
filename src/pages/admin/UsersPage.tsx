@@ -17,65 +17,128 @@ const UsersPage: React.FC = () => {
     console.log("Checking for admin users...");
     
     const setupAdminUser = async (email: string, password: string, displayName: string, isBackup: boolean = false) => {
-      // Check if admin exists in users array
-      const adminExists = users.some(u => u.username === email && u.role === "admin");
-      
-      console.log(`Has ${email} admin:`, adminExists);
-      
-      if (!adminExists) {
-        console.log(`Creating ${email} admin user...`);
+      try {
+        // Check if admin exists in users array
+        const adminExists = users.some(u => u.username.toLowerCase() === email.toLowerCase() && u.role === "admin");
         
-        try {
-          // We can't use getUserByEmail as it doesn't exist in the API
-          // Instead we'll search for the user in our profiles table
-          const { data: existingUserData, error: userError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('username', email)
-            .maybeSingle();
-            
-          if (userError) throw userError;
+        console.log(`Has ${email} admin:`, adminExists);
+        
+        if (!adminExists) {
+          console.log(`Creating ${email} admin user...`);
           
-          if (existingUserData) {
-            // User exists in profiles but not in our local state with admin role
-            // Update role directly in profiles table
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({ role: 'admin' })
-              .eq('id', existingUserData.id);
+          // Check if email is valid using regex
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const isValidEmail = emailRegex.test(email);
+          
+          if (isValidEmail) {
+            // Use email format for valid emails
+            try {
+              // Check if user exists in profiles
+              const { data: existingUserData, error: userError } = await supabase
+                .from('profiles')
+                .select('id')
+                .ilike('username', email)
+                .maybeSingle();
+                
+              if (userError) throw userError;
               
-            if (updateError) throw updateError;
-            
-            toast({
-              title: `Administrador ${isBackup ? 'backup ' : ''}atualizado`,
-              description: `Usuário ${email} foi configurado como administrador${isBackup ? ' backup' : ''} do sistema`,
-            });
-            
-            console.log(`${email} admin updated successfully`);
+              if (existingUserData) {
+                // User exists in profiles but not in our local state with admin role
+                // Update role directly in profiles table
+                const { error: updateError } = await supabase
+                  .from('profiles')
+                  .update({ role: 'admin' })
+                  .eq('id', existingUserData.id);
+                  
+                if (updateError) throw updateError;
+                
+                toast({
+                  title: `Administrador ${isBackup ? 'backup ' : ''}atualizado`,
+                  description: `Usuário ${email} foi configurado como administrador${isBackup ? ' backup' : ''} do sistema`,
+                  duration: 5000, // 5 seconds duration
+                });
+                
+                console.log(`${email} admin updated successfully`);
+              } else {
+                // Create new admin user with email
+                await addUser({
+                  username: email,
+                  password: password,
+                  role: "admin",
+                  isActive: true
+                });
+                
+                toast({
+                  title: `Administrador ${isBackup ? 'backup ' : ''}configurado`,
+                  description: `Usuário ${email} foi configurado como administrador${isBackup ? ' backup' : ''} do sistema`,
+                  duration: 5000, // 5 seconds duration
+                });
+                
+                console.log(`${email} admin created successfully`);
+              }
+            } catch (error: any) {
+              console.error(`Erro ao configurar usuário admin ${email}:`, error);
+              toast({
+                title: "Erro",
+                description: `Falha ao configurar usuário ${email}: ${error.message}`,
+                variant: "destructive",
+                duration: 5000, // 5 seconds duration
+              });
+            }
           } else {
-            // Create new admin user
-            await addUser({
-              username: email,
-              password: password,
-              role: "admin",
-              isActive: true
-            });
-            
-            toast({
-              title: `Administrador ${isBackup ? 'backup ' : ''}configurado`,
-              description: `Usuário ${email} foi configurado como administrador${isBackup ? ' backup' : ''} do sistema`,
-            });
-            
-            console.log(`${email} admin created successfully`);
+            // For usernames that aren't valid emails, we'll create them directly as profiles
+            try {
+              // Create UUID for the new user
+              const { data: { user: newUser }, error: authError } = await supabase.auth.admin.createUser({
+                email: `${email.toLowerCase().replace(/[^a-z0-9]/g, '')}@temp.com`,
+                password: password,
+                email_confirm: true,
+                user_metadata: {
+                  display_name: displayName
+                }
+              });
+              
+              if (authError) throw authError;
+              
+              if (newUser) {
+                // Update the username in the profile
+                const { error: profileError } = await supabase
+                  .from('profiles')
+                  .update({ 
+                    username: email,
+                    role: 'admin'
+                  })
+                  .eq('id', newUser.id);
+                  
+                if (profileError) throw profileError;
+                
+                toast({
+                  title: `Administrador ${isBackup ? 'backup ' : ''}configurado`,
+                  description: `Usuário ${email} foi configurado como administrador${isBackup ? ' backup' : ''} do sistema`,
+                  duration: 5000, // 5 seconds duration
+                });
+                
+                console.log(`${email} admin created successfully`);
+              }
+            } catch (error: any) {
+              console.error(`Erro ao configurar usuário admin ${email}:`, error);
+              toast({
+                title: "Erro",
+                description: `Falha ao configurar usuário ${email}: ${error.message}`,
+                variant: "destructive",
+                duration: 5000, // 5 seconds duration
+              });
+            }
           }
-        } catch (error: any) {
-          console.error(`Erro ao configurar usuário admin ${email}:`, error);
-          toast({
-            title: "Erro",
-            description: `Falha ao configurar usuário ${email}: ${error.message}`,
-            variant: "destructive",
-          });
         }
+      } catch (error: any) {
+        console.error(`Erro ao configurar usuário admin ${email}:`, error);
+        toast({
+          title: "Erro",
+          description: `Falha ao configurar usuário ${email}: ${error.message}`,
+          variant: "destructive",
+          duration: 5000, // 5 seconds duration
+        });
       }
     };
     

@@ -1,10 +1,10 @@
+
 import * as React from "react";
-import { Toaster as Sonner } from "sonner";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 5;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 5000; // Changed to 5 seconds
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -48,6 +48,7 @@ interface ToastT {
   description?: React.ReactNode;
   action?: ToastActionElement;
   variant?: "default" | "destructive";
+  duration?: number;
   onOpenChange?: (open: boolean) => void;
 }
 
@@ -151,6 +152,7 @@ export type Toast = {
   description?: React.ReactNode;
   action?: ToastActionElement;
   variant?: "default" | "destructive";
+  duration?: number; // Added duration
 };
 
 function toast(props: Toast) {
@@ -172,6 +174,7 @@ function toast(props: Toast) {
     toast: {
       ...props,
       id,
+      duration: props.duration || 5000, // Default to 5 seconds
       onOpenChange: (open) => {
         if (!open) {
           dismiss();
