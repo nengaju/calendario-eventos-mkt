@@ -7,9 +7,9 @@ import { useAuth } from '@/context/AuthContext';
 
 const UsersPage: React.FC = () => {
   const { users, addUser } = useUsers();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
-  // Check if nengaju@gmail.com admin exist and create it if not
+  // Check for admin users and create them if they don't exist
   useEffect(() => {
     if (!isAuthenticated) return;
     
@@ -17,7 +17,7 @@ const UsersPage: React.FC = () => {
     
     // Check for nengaju@gmail.com admin first (primary admin)
     const hasEmailAdmin = users.some(
-      user => user.username === "nengaju@gmail.com" && user.role === "admin"
+      u => u.username === "nengaju@gmail.com" && u.role === "admin"
     );
 
     console.log("Has nengaju@gmail.com admin:", hasEmailAdmin);
@@ -41,9 +41,33 @@ const UsersPage: React.FC = () => {
       });
     }
     
+    // Create a new admin account as backup
+    const hasAdminBackup = users.some(
+      u => u.username === "admin@sistema.com" && u.role === "admin"
+    );
+
+    if (!hasAdminBackup) {
+      console.log("Creating admin@sistema.com backup admin user...");
+      // Create admin@sistema.com admin user
+      addUser({
+        username: "admin@sistema.com",
+        password: "Admin@2025",
+        role: "admin",
+        isActive: true
+      }).then(() => {
+        toast({
+          title: "Administrador backup configurado",
+          description: "Usuário admin@sistema.com foi configurado como administrador backup do sistema",
+        });
+        console.log("admin@sistema.com backup admin created successfully");
+      }).catch(error => {
+        console.error("Erro ao configurar usuário admin backup:", error);
+      });
+    }
+    
     // JUNIOR is kept as a backup admin
     const hasJuniorAdmin = users.some(
-      user => user.username === "JUNIOR" && user.role === "admin"
+      u => u.username === "JUNIOR" && u.role === "admin"
     );
 
     console.log("Has JUNIOR admin:", hasJuniorAdmin);
@@ -62,7 +86,7 @@ const UsersPage: React.FC = () => {
         console.error("Erro ao criar usuário admin:", error);
       });
     }
-  }, [users, addUser, isAuthenticated]);
+  }, [users, addUser, isAuthenticated, user]);
 
   return <UserManagement />;
 };

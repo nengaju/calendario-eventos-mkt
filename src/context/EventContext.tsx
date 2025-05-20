@@ -108,19 +108,24 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         throw tasksError;
       }
 
-      // Fetch task assignees with proper join
+      // Fetch task assignees - Fixed query to avoid the foreign key error
       const { data: assigneesData, error: assigneesError } = await supabase
         .from('task_assignees')
-        .select(`
-          id,
-          task_id,
-          user_id,
-          profiles:user_id (id, username, role)
-        `);
+        .select('*');
 
       if (assigneesError) {
         console.error('Error fetching task assignees:', assigneesError);
         throw assigneesError;
+      }
+
+      // Fetch profiles separately to get usernames
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, role');
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
       }
 
       // Process data with proper error handling
@@ -135,11 +140,16 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                   ? assigneesData
                       .filter(assignee => assignee && assignee.task_id === task.id)
                       .map(assignee => {
-                        // Safely access the profiles data, ensuring it exists
-                        if (assignee && assignee.profiles) {
-                          return assignee.profiles;
+                        // Find profile data for this assignee
+                        const profile = profilesData.find(p => p.id === assignee.user_id);
+                        if (profile) {
+                          return {
+                            id: profile.id,
+                            username: profile.username,
+                            role: profile.role
+                          };
                         }
-                        // Fallback to just the user_id as string if profiles isn't available
+                        // Fallback to just the user_id as string
                         return assignee.user_id;
                       })
                       // Filter out any null or undefined values
