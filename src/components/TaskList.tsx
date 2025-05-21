@@ -92,7 +92,12 @@ const TaskList: React.FC<TaskListProps> = ({
     
     // If the task has assignees, check if current user is assigned
     if (task.assignees && task.assignees.length > 0) {
-      return task.assignees.some(assignee => assignee === user?.id);
+      return task.assignees.some(assignee => {
+        if (typeof assignee === 'string') {
+          return assignee === user?.id;
+        }
+        return assignee?.id === user?.id;
+      });
     }
     
     // If no assignees, show task to everyone (assuming public task)

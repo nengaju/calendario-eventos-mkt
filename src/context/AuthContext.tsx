@@ -13,11 +13,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Check if the user is authenticated
+  // Check permissions based on profile role
   const isAuthenticated = !!user;
-  // Set isAdmin to true for all authenticated users
-  const isAdmin = isAuthenticated;
-  const isEditor = isAuthenticated;
+  const isAdmin = isAuthenticated && profile?.role === 'admin';
+  const isEditor = isAuthenticated && (profile?.role === 'editor' || profile?.role === 'admin');
   const isViewer = isAuthenticated;
 
   // Initialize auth state from Supabase
@@ -67,21 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                       });
                   }
                 } else if (profileData) {
-                  // Ensure profile has admin role
-                  if (profileData.role !== 'admin') {
-                    supabase
-                      .from('profiles')
-                      .update({ role: 'admin' })
-                      .eq('id', session.user.id)
-                      .then(() => {
-                        setProfile({
-                          ...profileData,
-                          role: 'admin'
-                        });
-                      });
-                  } else {
-                    setProfile(profileData);
-                  }
+                  setProfile(profileData);
                 }
               });
           }, 0);
@@ -130,21 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   });
               }
             } else if (data) {
-              // Ensure profile has admin role
-              if (data.role !== 'admin') {
-                supabase
-                  .from('profiles')
-                  .update({ role: 'admin' })
-                  .eq('id', session.user.id)
-                  .then(() => {
-                    setProfile({
-                      ...data,
-                      role: 'admin'
-                    });
-                  });
-              } else {
-                setProfile(data);
-              }
+              setProfile(data);
             }
             setLoading(false);
           });
@@ -171,6 +142,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       toast({
         title: "Login realizado com sucesso",
         description: "Bem-vindo(a) de volta!",
+        duration: 5000,
       });
       
       return true;
@@ -180,6 +152,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         title: "Erro de autenticação",
         description: error.message || "Usuário ou senha inválidos",
         variant: "destructive",
+        duration: 5000,
       });
       return false;
     }
@@ -192,6 +165,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       toast({
         title: "Logout realizado",
         description: "Sessão encerrada com sucesso",
+        duration: 5000,
       });
     } catch (error) {
       console.error('Logout error:', error);
@@ -199,6 +173,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         title: "Erro ao fazer logout",
         description: "Ocorreu um problema ao encerrar sua sessão",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };

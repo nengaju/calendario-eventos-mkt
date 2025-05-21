@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Task, AssigneeType } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -103,6 +104,16 @@ const TaskItem: React.FC<TaskItemProps> = ({
       return assignee?.id === userId;
     });
   };
+
+  // Get display name for assignee (username instead of email)
+  const getAssigneeName = (assignee: string | AssigneeType): string => {
+    if (typeof assignee === 'string') {
+      // Find the username in available users
+      const user = availableUsers.find(u => u.id === assignee);
+      return user ? user.username : assignee.substring(0, 2);
+    }
+    return assignee?.username || '';
+  };
   
   if (isEditing) {
     return (
@@ -146,17 +157,15 @@ const TaskItem: React.FC<TaskItemProps> = ({
         {task.assignees && task.assignees.length > 0 && (
           <div className="flex -space-x-1 overflow-hidden mr-1">
             {task.assignees.slice(0, 3).map((assignee, index) => {
-              // Handle both string and object type assignees
-              const displayText = typeof assignee === 'string' 
-                ? assignee.substring(0, 2) 
-                : (assignee?.username || '').substring(0, 2);
-                
+              // Use the new function to get display name
+              const displayText = getAssigneeName(assignee).substring(0, 2).toUpperCase();
+              
               const isCurrentUser = typeof assignee === 'string' 
                 ? assignee === user?.id 
                 : assignee?.id === user?.id;
                 
               return (
-                <Badge key={index} variant="outline" className={`${isCurrentUser ? 'bg-blue-100' : ''}`}>
+                <Badge key={index} variant="outline" className={`${isCurrentUser ? 'bg-blue-100' : ''}`} title={getAssigneeName(assignee)}>
                   {displayText}
                 </Badge>
               );

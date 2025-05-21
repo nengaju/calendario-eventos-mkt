@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUsers } from '@/context/UserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { AssigneeType, UserRole } from '@/types';
+import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 // Interface for new user data that includes password
 interface NewUserData {
@@ -43,6 +45,8 @@ const UserManagement: React.FC = () => {
     setUserAssignee, 
     toggleUserActive 
   } = useUsers();
+  
+  const { user: currentUser, profile: currentProfile } = useAuth();
 
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -113,7 +117,7 @@ const UserManagement: React.FC = () => {
       isActive: editActive
     };
     
-    // Pass the password separately via addUser/updateUser
+    // Pass the password separately via updateUser
     updateUser(userUpdate, editPassword);
     
     setIsEditDialogOpen(false);
@@ -122,6 +126,34 @@ const UserManagement: React.FC = () => {
   const handleDeleteUser = (userId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
       deleteUser(userId);
+    }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    try {
+      await setUserRole(userId, newRole);
+      
+      // Show message about role change implications
+      toast({
+        title: "Função atualizada",
+        description: `Os níveis de acesso do usuário foram atualizados de acordo com a nova função: ${
+          newRole === 'admin' ? 'Administrador' : 
+          newRole === 'editor' ? 'Editor' : 'Visualizador'
+        }`,
+        duration: 5000,
+      });
+      
+      // If changing your own role, warn about potential permission loss
+      if (userId === currentUser?.id && currentProfile?.role === 'admin' && newRole !== 'admin') {
+        toast({
+          title: "Aviso",
+          description: "Você alterou sua própria função e pode perder acesso a algumas áreas na próxima sessão",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      console.error('Error changing role:', error);
     }
   };
 
@@ -267,7 +299,10 @@ const UserManagement: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    onClick={() => setUserRole(user.id, user.role === 'admin' ? 'viewer' : 'admin')}
+                    onClick={() => {
+                      const newRole = user.role === 'admin' ? 'viewer' : 'admin';
+                      handleRoleChange(user.id, newRole);
+                    }}
                   >
                     {user.role === 'admin' ? (
                       <ShieldOff className="h-4 w-4" />
@@ -332,6 +367,11 @@ const UserManagement: React.FC = () => {
                   <SelectItem value="viewer">Visualizador</SelectItem>
                 </SelectContent>
               </Select>
+              {editingUser === currentUser?.id && editRole !== currentProfile?.role && (
+                <div className="text-amber-600 text-xs mt-1">
+                  Atenção: Alterar sua própria função pode remover seus privilégios atuais.
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-assignee">Responsável</Label>

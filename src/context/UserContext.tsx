@@ -1,9 +1,10 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { UserRole } from '@/types';
 import { AssigneeType } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 // Define user types
 export interface User {
@@ -30,6 +31,7 @@ interface UsersContextType {
   setUserRole: (id: string, role: UserRole) => Promise<void>;
   setUserAssignee: (id: string, assignee?: AssigneeType) => Promise<void>;
   toggleUserActive: (id: string) => Promise<void>;
+  refreshUsers: () => Promise<void>;
 }
 
 // Create Context
@@ -38,6 +40,7 @@ const UsersContext = createContext<UsersContextType | undefined>(undefined);
 export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user: currentUser } = useAuth();
 
   // Fetch users on component mount
   useEffect(() => {
@@ -68,10 +71,16 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         title: "Erro",
         description: "Falha ao carregar usuários",
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Refresh users manually
+  const refreshUsers = async () => {
+    await fetchUsers();
   };
 
   // Add a new user
@@ -117,6 +126,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         toast({
           title: "Sucesso",
           description: "Usuário criado com sucesso",
+          duration: 5000,
         });
         
         console.log(`${userData.username} created successfully with role ${userData.role}`);
@@ -127,6 +137,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         title: "Erro",
         description: error.message || "Falha ao adicionar usuário",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
@@ -151,6 +162,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         toast({
           title: "Informação",
           description: "Atualização de senha só é possível através do painel do Supabase",
+          duration: 5000,
         });
       }
 
@@ -159,9 +171,19 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         prevUsers.map(u => (u.id === user.id ? user : u))
       );
 
+      // If updating current user's role, refresh the page to apply new permissions
+      if (user.id === currentUser?.id) {
+        toast({
+          title: "Atualização de função",
+          description: "Sua função foi alterada. As alterações serão aplicadas na próxima sessão.",
+          duration: 5000,
+        });
+      }
+
       toast({
         title: "Sucesso",
         description: "Usuário atualizado com sucesso",
+        duration: 5000,
       });
     } catch (error: any) {
       console.error('Error updating user:', error.message);
@@ -169,6 +191,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         title: "Erro",
         description: "Falha ao atualizar usuário",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
@@ -186,6 +209,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast({
         title: "Sucesso",
         description: "Usuário excluído com sucesso",
+        duration: 5000,
       });
     } catch (error: any) {
       console.error('Error deleting user:', error.message);
@@ -193,6 +217,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         title: "Erro",
         description: "Falha ao excluir usuário. Nota: Admin não tem permissão para deletar usuários através da API. Use o dashboard do Supabase.",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
@@ -212,9 +237,19 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         prevUsers.map(user => (user.id === id ? { ...user, role } : user))
       );
 
+      // If updating current user's role, notify about permission changes
+      if (id === currentUser?.id) {
+        toast({
+          title: "Alerta",
+          description: "Você alterou sua própria função. As alterações de permissões serão aplicadas na próxima sessão.",
+          duration: 5000,
+        });
+      }
+
       toast({
         title: "Sucesso",
-        description: `Função do usuário atualizada para ${role}`,
+        description: `Função do usuário atualizada para ${role === 'admin' ? 'Administrador' : role === 'editor' ? 'Editor' : 'Visualizador'}`,
+        duration: 5000,
       });
     } catch (error: any) {
       console.error('Error updating user role:', error.message);
@@ -222,6 +257,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         title: "Erro",
         description: "Falha ao atualizar função do usuário",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
@@ -237,6 +273,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast({
         title: "Sucesso",
         description: "Responsável atualizado com sucesso",
+        duration: 5000,
       });
     } catch (error: any) {
       console.error('Error updating user assignee:', error.message);
@@ -244,6 +281,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         title: "Erro",
         description: "Falha ao atualizar responsável",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
@@ -264,6 +302,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast({
         title: "Sucesso",
         description: `Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso`,
+        duration: 5000,
       });
     } catch (error: any) {
       console.error('Error toggling user status:', error.message);
@@ -271,6 +310,7 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         title: "Erro",
         description: "Falha ao alterar status do usuário",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
@@ -283,7 +323,8 @@ export const UsersProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     deleteUser,
     setUserRole,
     setUserAssignee,
-    toggleUserActive
+    toggleUserActive,
+    refreshUsers
   };
 
   if (loading) {
